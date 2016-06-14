@@ -331,16 +331,24 @@ public class GameManager {
 		StringBuilder sb = new StringBuilder();
 		Player[][] players = g.getPlayers();
 
-		sb.append(ChatColor.GREEN + "<---------------------[ Alive: " + players[0].length + " ]--------------------->\n" + ChatColor.GREEN + " ");
+		sb.append(ChatColor.DARK_GREEN + "---------------------- Alive: " + players[0].length + " ----------------------\n" + ChatColor.DARK_GRAY + " ");
 		for (Player p : players[0]) {
-			sb.append(p.getName() + ",");
+			sb.append(ChatColor.DARK_GRAY + " | " + ChatColor.GREEN + p.getName());
 		}
-		sb.append("\n\n");
-		sb.append(ChatColor.RED + "<---------------------[ Dead: " + players[1].length + " ]---------------------->\n" + ChatColor.GREEN + " ");
+                if (players[0].length == 0) {
+                    sb.append(ChatColor.DARK_GRAY + "\n\n");
+                } else {
+                    sb.append(ChatColor.DARK_GRAY + " |" + "\n\n");
+                }
+		sb.append(ChatColor.DARK_RED + "---------------------- Dead: " + players[1].length + " -----------------------\n" + ChatColor.DARK_GRAY + " ");
 		for (Player p : players[1]) {
-			sb.append(p.getName() + ",");
+			sb.append(ChatColor.DARK_GRAY + " | " + ChatColor.RED + p.getName());
 		}
-		sb.append("\n\n");
+                if (players[1].length == 0) {
+                    sb.append(ChatColor.DARK_GRAY + "\n\n");
+                } else {
+                    sb.append(ChatColor.DARK_GRAY + " |" + "\n\n");
+                }
 
 		return sb.toString();
 	}
