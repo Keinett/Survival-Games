@@ -1,12 +1,16 @@
 package org.mcsg.survivalgames.util;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
+import org.mcsg.survivalgames.GameManager;
 import org.mcsg.survivalgames.SettingsManager;
 
 public class ChestRatioStorage {
@@ -23,27 +27,63 @@ public class ChestRatioStorage {
 		return instance;
 	}
 
+        /**
+         * #Modification 6/22/2016 by Keiaxx
+         * 
+         * Recoded chest manager to allow use of item meta.
+         * 
+         */
+        
 	public void setup() {
 
-		FileConfiguration conf = SettingsManager.getInstance().getChest();
+                System.out.println("GOT HERE 0");
+                
+                YamlConfiguration c = YamlConfiguration.loadConfiguration(new File(GameManager.getInstance().getPlugin().getDataFolder(), "chest.yml"));
 
 		for (int clevel = 1; clevel <= 16; clevel++) {
+                    
 			ArrayList<ItemStack> lvl = new ArrayList<ItemStack>();
-			List<String> list = conf.getStringList("chest.lvl" + clevel);
-
+                        
+                        
+			//List<String> list = c.getStringList("chest.lvl" + clevel);
+                        
+                        
+                        
+                        List<ItemStack> list = (List<ItemStack>) c.getList("chest.lvl" + clevel);
+                        
+                        System.out.println("GOT HERE 0 CHECKING LEVEL "+clevel);
+                        
+                        try{
 			if (!list.isEmpty()) {
-				for (int b = 0; b < list.size(); b++) {
-					ItemStack i = ItemReader.read(list.get(b));
-					lvl.add(i);
-				}
+                            
+                                System.out.println("GOT HERE 1");
+                            
+                                ItemStack[] content = ((List<ItemStack>) c.get("chest.lvl" + clevel)).toArray(new ItemStack[0]);
+                                
+                                System.out.println("GOT HERE 2");
+                            
+                                lvl.addAll(Arrays.asList(content));
+                                
+                                for(ItemStack iStack : content){
+                                    
+                                    System.out.println("SG DEBUG: Added item to ChestRatioStorage Level: "+ clevel +" Item: "+iStack.getItemMeta().getDisplayName());
+                                
+                                }
+                                
 				lvlstore.put(clevel, lvl);
+                                
 			} else {
+                            System.out.println("LIST IS EMPTY "+clevel);
 				maxlevel = clevel - 1;
 				break;
 			}
+                        }catch (NullPointerException ex){
+                            System.out.println("NULL DUDE "+clevel);
+                        }
 		}
 
-		ratio = conf.getInt("chest.ratio", ratio);
+                ratio = c.getInt("chest.ratio", ratio);
+		
 
 	}
 
@@ -67,6 +107,7 @@ public class ChestRatioStorage {
 				}
 
 				ArrayList<ItemStack> lvl = lvlstore.get(level);
+                                
 				ItemStack item = lvl.get(r.nextInt(lvl.size()));
 
 				items.add(item);

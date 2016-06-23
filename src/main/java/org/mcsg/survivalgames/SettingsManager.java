@@ -202,7 +202,7 @@ public class SettingsManager {
 		chest = YamlConfiguration.loadConfiguration(f5);
 		if (chest.getInt("version", 0) != CHEST_VERSION) {
 			moveFile(f5);
-			loadFile("chest.yml");
+			
 			reloadKits();
 		}
 	}

@@ -19,6 +19,7 @@ import org.mcsg.survivalgames.commands.Disable;
 import org.mcsg.survivalgames.commands.Enable;
 import org.mcsg.survivalgames.commands.Flag;
 import org.mcsg.survivalgames.commands.ForceStart;
+import org.mcsg.survivalgames.commands.Inventory;
 import org.mcsg.survivalgames.commands.Join;
 import org.mcsg.survivalgames.commands.Leave;
 import org.mcsg.survivalgames.commands.LeaveQueue;
@@ -49,6 +50,7 @@ public class CommandHandler implements CommandExecutor {
 	}
 
 	private void loadCommands() {
+                commands.put("inventory", new Inventory());
 		commands.put("createarena", new CreateArena());
 		commands.put("join", new Join());
 		commands.put("addwall", new AddWall());

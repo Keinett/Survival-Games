@@ -29,8 +29,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.1</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>1.7</source>
+					<target>1.7</target>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -62,5 +62,11 @@
 			<artifactId>VaultAPI</artifactId>
 			<version>1.5</version>
 		</dependency>
+	 <dependency>
+	  <groupId>Item-NBT-API</groupId>
+	  <artifactId>Item-NBT-API</artifactId>
+	  <version>1.0</version>
+	  <scope>provided</scope>
+	 </dependency>
 	</dependencies>
 </project>
