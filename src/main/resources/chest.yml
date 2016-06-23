@@ -22,7 +22,7 @@ chest:
       display-name: Irritating Stick
       enchants:
         DAMAGE_ALL: 5
-        KNOCKBACK: 2
+        KNOCKBACK: 3
   - ==: org.bukkit.inventory.ItemStack
     type: CHEST
 
