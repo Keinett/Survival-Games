@@ -62,11 +62,5 @@
 			<artifactId>VaultAPI</artifactId>
 			<version>1.5</version>
 		</dependency>
-	 <dependency>
-	  <groupId>Item-NBT-API</groupId>
-	  <artifactId>Item-NBT-API</artifactId>
-	  <version>1.0</version>
-	  <scope>provided</scope>
-	 </dependency>
 	</dependencies>
 </project>

@@ -1,13 +1,8 @@
 package org.mcsg.survivalgames.events;
 
-import de.tr7zw.itemnbtapi.NBTItem;
-import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Random;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -18,8 +13,6 @@ import org.bukkit.block.DoubleChest;
 import org.bukkit.block.Dropper;
 import org.bukkit.block.Furnace;
 import org.bukkit.block.Hopper;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -80,12 +73,12 @@ public class ChestReplaceEvent implements Listener {
                             Inventory[] chestInventory = new Inventory[]{((Chest) clicked).getBlockInventory()};
                             
                             ItemStack item = chestInventory[0].getItem(0);
-
+                            
                             int level = (item != null && item.getType() == Material.WOOL) ? item.getData().getData() + 1 : 1;
-
+                            
                             level = ChestRatioStorage.getInstance().getLevel(level);
                             SurvivalGames.debug(Arrays.toString(chestInventory) + " " + level);
-
+                            
                             for (Inventory chestContents : chestInventory) {
 
                                 chestContents.setContents(new ItemStack[chestContents.getContents().length]);
