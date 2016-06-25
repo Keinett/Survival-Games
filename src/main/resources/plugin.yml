@@ -1,7 +1,7 @@
 name: SurvivalGames
-version: 0.5.9
+version: 0.6.0-beta
 main: org.mcsg.survivalgames.SurvivalGames
-authors: [Double0negative, Pocketkid2]
+authors: [Double0negative, Pocketkid2, Keiaxx, Rushnett]
 description: Fully Automated Hunger Games Plugin!
 commands:
     survivalgames:
