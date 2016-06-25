@@ -8,7 +8,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.mcsg.survivalgames.GameManager;
 import org.mcsg.survivalgames.MessageManager;
-import org.mcsg.survivalgames.SettingsManager;
+import org.mcsg.survivalgames.MessageManager.PrefixType;
 
 public class Inventory implements SubCommand {
 
@@ -26,6 +26,7 @@ public class Inventory implements SubCommand {
                 c.set("inventory.content", p.getInventory().getContents());
                 c.save(new File(GameManager.getInstance().getPlugin().getDataFolder(), p.getName()+".yml"));
                 
+                MessageManager.getInstance().sendMessage(PrefixType.INFO, "Inventory data stored: " + p.getName() + ".yml.", player);
 
                 return true;
             } catch (IOException ex) {
@@ -36,11 +37,13 @@ public class Inventory implements SubCommand {
 
 	@Override
 	public String help(Player p) {
-		return "/sg inventory - " + SettingsManager.getInstance().getMessageConfig().getString("messages.help.vote", "Votes to start the game");
+                // maybe not needed, keeping here for reference
+		// return "/sg inventory - " + SettingsManager.getInstance().getMessageConfig().getString("messages.help.vote", "Votes to start the game");
+                return null;
 	}
 
 	@Override
 	public String permission() {
-		return "sg.arena.vote";
+		return "sg.arena.inventory";
 	}
 }
