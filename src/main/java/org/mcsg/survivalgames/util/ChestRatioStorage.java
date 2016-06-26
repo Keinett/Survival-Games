@@ -50,7 +50,7 @@ public class ChestRatioStorage {
 
                     for (ItemStack iStack : content) {
 
-                        System.out.println("SG DEBUG: Added item to ChestRatioStorage Level: " + clevel + " Item: " + iStack.getItemMeta().get);
+                        System.out.println("SG DEBUG: Added item to ChestRatioStorage Level: " + clevel + " Item: " + iStack.getType().name());
 
                     }
 
