@@ -36,6 +36,7 @@ import org.mcsg.survivalgames.util.ChestRatioStorage;
 import org.mcsg.survivalgames.util.DatabaseManager;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
+import org.mcsg.survivalgames.events.CompassEvents;
 
 public class SurvivalGames extends JavaPlugin {
 	public static Logger logger;
@@ -155,6 +156,7 @@ public class SurvivalGames extends JavaPlugin {
 			pm.registerEvents(new BandageUse(), p);
 			pm.registerEvents(new KitEvents(), p);
 			pm.registerEvents(new KeepLobbyLoadedEvent(), p);
+                        pm.registerEvents(new CompassEvents(), p);
 
 			for (Player p : Bukkit.getOnlinePlayers()) {
 				if (GameManager.getInstance().getBlockGameId(p.getLocation()) != -1) {

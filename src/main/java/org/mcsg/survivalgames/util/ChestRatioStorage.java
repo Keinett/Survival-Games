@@ -28,7 +28,7 @@ public class ChestRatioStorage {
     /**
      * #Modification 6/22/2016 by Keiaxx
      *
-     * Recoded chest manager to allow use of item meta.
+     * Recoded chest manager to allow use of item meta.d
      *
      */
     public void setup() {
