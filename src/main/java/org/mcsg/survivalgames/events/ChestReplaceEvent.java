@@ -85,7 +85,7 @@ public class ChestReplaceEvent implements Listener {
                                 //This here randomizes the placement of the items in the level given.
                                 for (ItemStack i : ChestRatioStorage.getInstance().getItems(level)) {
 
-                                    int l = rand.netInt(26); // Why 26 you may ask? Muahahaha. Jk. This is because the slots in the chest are numbered from 0-26. 
+                                    int l = rand.nextInt(26); // Why 26 you may ask? Muahahaha. Jk. This is because the slots in the chest are numbered from 0-26. 
 
                                     while (chestContents.getItem(l) != null) {
                                         l = rand.nextInt(26);
