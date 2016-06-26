@@ -50,7 +50,7 @@ public class ChestRatioStorage {
 
                     for (ItemStack iStack : content) {
 
-                        System.out.println("SG DEBUG: Added item to ChestRatioStorage Level: " + clevel + " Item: " + iStack.getItemMeta().getDisplayName());
+                        System.out.println("SG DEBUG: Added item to ChestRatioStorage Level: " + clevel + " Item: " + iStack.getItemMeta().get);
 
                     }
 
@@ -62,7 +62,11 @@ public class ChestRatioStorage {
                     break;
                 }
             } catch (NullPointerException ex) {
-                System.out.println("NULL DUDE " + clevel);
+                
+                maxlevel = clevel - 1;
+                System.out.println("NULL DUDE " + clevel + "MAX LEVEL IS: "+maxlevel);
+                break;
+                
             }
         }
 
