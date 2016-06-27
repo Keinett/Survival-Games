@@ -8,6 +8,7 @@ package org.mcsg.survivalgames;
 import java.util.HashMap;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.mcsg.survivalgames.util.CompassListener;
 
 /**
@@ -18,6 +19,7 @@ public class CompassHandler {
     
     FileConfiguration config;
     static CompassHandler instance;
+    Plugin p;
     
     Double radius = 100D;   
     Boolean compassEnabled = true;
@@ -25,7 +27,8 @@ public class CompassHandler {
     
     
     
-    public void setuo(){
+    public void setup(){
+      
         CompassHandler.instance = this;
         config = SettingsManager.getInstance().getConfig();
         // Set up Compass Stuff

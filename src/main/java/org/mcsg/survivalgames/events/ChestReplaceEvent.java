@@ -50,57 +50,6 @@ public class ChestReplaceEvent implements Listener {
             }
         }
     }
-    
-    /**
-     * For debugging purposes
-     * 
-     * @param e 
-     */
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void ChestListenerDebug(PlayerInteractEvent e) {
-
-        if (e.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            e.getPlayer().sendMessage("YOU CLICKED A CHEST. DOING SHIT HOMEBOI");
-            BlockState clicked = e.getClickedBlock().getState();
-
-            if (clicked instanceof Chest || clicked instanceof DoubleChest) {
-             
-                      
-                            Chest chest = (Chest) clicked.getBlock().getState();
-                            
-                            Inventory[] chestInventory = new Inventory[]{((Chest) clicked).getBlockInventory()};
-                            
-                            ItemStack item = chestInventory[0].getItem(0);
-
-                            int level = (item != null && item.getType() == Material.WOOL) ? item.getData().getData() + 1 : 1;
-
-                            level = ChestRatioStorage.getInstance().getLevel(level);
-                        
-                            e.getPlayer().sendMessage(Arrays.toString(chestInventory) + " LVL:" + level);
-
-                            for (Inventory chestContents : chestInventory) {
-
-                                chestContents.setContents(new ItemStack[chestContents.getContents().length]);
-
-                                //This here randomizes the placement of the items in the level given.
-                                for (ItemStack i : ChestRatioStorage.getInstance().getItems(level)) {
-
-                                    int l = rand.nextInt(26); // Why 26 you may ask? Muahahaha. Jk. This is because the slots in the chest are numbered from 0-26. 
-
-                                    while (chestContents.getItem(l) != null) {
-                                        l = rand.nextInt(26);
-                                    }
-
-                                    chestContents.setItem(l, i);
-                                }
-
-                            }
-                        
-                       
-                    
-                    }
-                }
-            }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void ChestListener(PlayerInteractEvent e) {
