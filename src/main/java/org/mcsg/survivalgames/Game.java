@@ -21,7 +21,6 @@ import org.mcsg.survivalgames.api.PlayerLeaveArenaEvent;
 import org.mcsg.survivalgames.hooks.HookManager;
 import org.mcsg.survivalgames.logging.QueueManager;
 import org.mcsg.survivalgames.stats.StatsManager;
-import org.mcsg.survivalgames.util.CompassListener;
 import org.mcsg.survivalgames.util.ItemReader;
 import org.mcsg.survivalgames.util.Kit;
 

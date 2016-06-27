@@ -1,23 +1,23 @@
 package org.mcsg.survivalgames.events;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Random;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.mcsg.survivalgames.CompassHandler;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.mcsg.survivalgames.GameManager;
 import org.mcsg.survivalgames.MessageManager;
 import org.mcsg.survivalgames.MessageManager.PrefixType;
-import org.mcsg.survivalgames.util.CompassListener;
 
 public class CompassEvents implements Listener {
 
@@ -33,108 +33,75 @@ public class CompassEvents implements Listener {
 
             if (gameID != -1 || event.getPlayer().isOp()) {
 
-                if (CompassHandler.getInstance().containsTracker(player)) {
+                Player p = getClosestPlayer(getNearbyPlayers(event.getPlayer()), event.getPlayer());
 
-                    CompassListener cl = CompassHandler.getInstance().getCompassListener(player);
-                    cl.disable();
-
+                if (player.hasMetadata("compass_lastuse")) {
+                    if ((System.currentTimeMillis() / 1000) - player.getMetadata("compass_lastuse").get(0).asLong() < 5) {
+                        if (player.hasMetadata("compass_tracking")) {
+                            msgmgr.sendMessage(PrefixType.INFO, "Tracking last known location of" + ChatColor.AQUA + " " + player.getMetadata("compass_tracking").get(0).asString(), player);
+                        } else {
+                            msgmgr.sendMessage(PrefixType.INFO, ChatColor.AQUA + "No players within a 200 block radius!", player);
+                        }
+                    } else {
+                        player.removeMetadata("compass_lastuse", GameManager.getInstance().getPlugin());
+                        player.removeMetadata("compass_tracking", GameManager.getInstance().getPlugin());
+                    }
                 } else {
+                    if (p != null && !GameManager.getInstance().isSpectator(p)) {
+                        event.getPlayer().setCompassTarget(p.getLocation());
+                        msgmgr.sendMessage(PrefixType.INFO, "Tracking last known location of" + ChatColor.GREEN + " " + p.getName(), player);
+                        player.setMetadata("compass_lastuse", new FixedMetadataValue(GameManager.getInstance().getPlugin(), System.currentTimeMillis() / 1000));
+                        player.setMetadata("compass_tracking", new FixedMetadataValue(GameManager.getInstance().getPlugin(), p.getName()));
 
-                    activateCompass(player, gameID);
-
+                    } else {
+                        msgmgr.sendMessage(PrefixType.INFO, "No players within a 200 block radius!", player);
+                        player.setMetadata("compass_lastuse", new FixedMetadataValue(GameManager.getInstance().getPlugin(), System.currentTimeMillis() / 1000));
+                    }
                 }
-
             } else {
                 msgmgr.sendMessage(PrefixType.INFO, "The compass can only be used whilst in-game!", player);
             }
         }
     }
 
-    @EventHandler
-    public void onPlayerDeath(EntityDeathEvent event) {
-        if (((event.getEntity() instanceof Player)) && (CompassHandler.getInstance().containsTracker((Player) event.getEntity()))) {
-            Player p = (Player) event.getEntity();
-            CompassHandler.getInstance().stopPlayerCompassListener(p);
-        }
-    }
-
-    @EventHandler
-    public void onPlayerDisconnect(PlayerQuitEvent event) {
-        if (CompassHandler.getInstance().containsTracker(event.getPlayer())) {
-            Player p = event.getPlayer();
-            CompassHandler.getInstance().stopPlayerCompassListener(p);
-        }
-    }
-
-    private void activateCompass(Player player, Integer gid) {
-        ArrayList nearbyPlayers = getNearbyPlayers(player, gid);
-        Player targetP = getRandomPlayer(nearbyPlayers);
-        if (targetP != null) {
-            msgmgr.sendMessage(PrefixType.INFO, "Nearby player found! Tracking: " + ChatColor.BOLD + ChatColor.DARK_GREEN + targetP.getName(), player);
-            CompassListener locationUpdater = new CompassListener(GameManager.getInstance().getGame(gid), player, targetP);
-            locationUpdater.setTaskID(Bukkit.getServer().getScheduler().scheduleAsyncRepeatingTask(GameManager.getInstance().getPlugin(), locationUpdater, 0L, 20));
-
-        } else {
-            msgmgr.sendMessage(PrefixType.INFO, "No nearby players found!", player);
-        }
-    }
-
-//    public Player getRandomPlayer(ArrayList<Entity> nearbyPlayers) {
-//
-//        if (nearbyPlayers == null) {
-//            return null;
-//        }
-//        
-//        Random r = new Random();
-//        Player target = null;
-//        
-//        do {
-//            int max = nearbyPlayers.size();
-//            int random = r.nextInt(max);
-//            target = (Player) nearbyPlayers.get(random);
-//            nearbyPlayers.remove(random);
-//        } while ((!nearbyPlayers.isEmpty()) && (GameManager.getInstance().isSpectator(target)));
-//        
-//        
-//        if ((target != null) && (GameManager.getInstance().isSpectator(target))) {
-//            return null;
-//        }
-//        
-//        return target;
-//    }
-
-    
-    public Player getRandomPlayer(ArrayList<Entity> nearbyPlayers) {
-
+    public Player getClosestPlayer(ArrayList<Entity> nearbyPlayers, Player player) {
         if (nearbyPlayers == null) {
             return null;
         }
-        
         Random r = new Random();
         Player target = null;
-        
-        do {
-            int max = nearbyPlayers.size();
-            int random = r.nextInt(max);
-            target = (Player) nearbyPlayers.get(random);
-            nearbyPlayers.remove(random);
-        } while ((!nearbyPlayers.isEmpty()));
-        
-        
-        if ((target != null)) {
-            return null;
+
+        HashMap<Entity, Double> distances = new HashMap();
+
+        for (Entity nearPlayer : nearbyPlayers) {
+
+            Location locPlayer = player.getLocation();
+
+            Double distanceToTarget = locPlayer.distance(nearPlayer.getLocation());
+
+            distances.put(nearPlayer, distanceToTarget);
         }
-        
+
+        Entry<Entity, Double> minimum = null;
+
+        for (Entry<Entity, Double> entrySet : distances.entrySet()) {
+            if (minimum == null || minimum.getValue() > entrySet.getValue()) {
+                minimum = entrySet;
+            }
+        }
+
+        target = (Player) minimum.getKey();
+
         return target;
     }
-    
-    
-    public ArrayList<Entity> getNearbyPlayers(Player p, Integer gid) {
 
-        Double radius = CompassHandler.getInstance().getCompassRadius();
+    public ArrayList<Entity> getNearbyPlayers(Player p) {
+
+        Double radius = 200D;
 
         ArrayList nearbyEntities;
         nearbyEntities = (ArrayList) p.getNearbyEntities(radius, radius, radius);
+
         for (int i = 0; i < nearbyEntities.size(); i++) {
             Entity e = (Entity) nearbyEntities.get(i);
             if (!(e instanceof Player)) {
@@ -142,9 +109,11 @@ public class CompassEvents implements Listener {
                 i--;
             }
         }
+
         if (nearbyEntities.isEmpty()) {
             return null;
         }
+
         return nearbyEntities;
     }
 }

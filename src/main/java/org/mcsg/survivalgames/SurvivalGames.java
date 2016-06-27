@@ -76,7 +76,9 @@ public class SurvivalGames extends JavaPlugin {
 			"ChaskyT",
 			"Anon232",
 			"IngeniousGamer", // :) -Bryce
-			"Pocketkid2"
+			"Pocketkid2",
+                        "Keiaxx",
+                        "Rushnett"
 	});
 
 	SurvivalGames p = this;
@@ -122,7 +124,7 @@ public class SurvivalGames extends JavaPlugin {
 			SettingsManager.getInstance().setup(p);
 			MessageManager.getInstance().setup();
 			GameManager.getInstance().setup(p);
-                        CompassHandler.getInstance().setup();
+
 
 			try { // try loading everything that uses SQL.
 				FileConfiguration c = SettingsManager.getInstance().getConfig();
