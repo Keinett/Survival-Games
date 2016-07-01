@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mcsg</groupId>
     <artifactId>survivalgames</artifactId>
-    <version>0.6.0</version>
+    <version>0.6.1</version>
     <name>SurvivalGames</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -74,11 +74,6 @@
             <groupId>net.milkbowl.vault</groupId>
             <artifactId>VaultAPI</artifactId>
             <version>1.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.inventivetalent</groupId>
-            <artifactId>bossbarapi</artifactId>
-            <version>2.4.1</version>
         </dependency>
     </dependencies>
 </project>

@@ -14,6 +14,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.mcsg.survivalgames.Game;
 import org.mcsg.survivalgames.GameManager;
 
@@ -62,6 +63,7 @@ public class SpectatorEvents implements Listener {
 				}
 				g.getNextSpec().put(player, i);
 				Player tpto = players[i];
+                                player.setMetadata("click_teleport", new FixedMetadataValue(GameManager.getInstance().getPlugin(), true));
 				player.teleport(tpto.getLocation());
 				player.sendMessage(ChatColor.AQUA + "You are now spectating " + tpto.getName());
 			} else if (GameManager.getInstance().isSpectator(player)) {

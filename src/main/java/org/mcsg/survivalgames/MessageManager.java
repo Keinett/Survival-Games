@@ -8,10 +8,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.inventivetalent.bossbar.BossBar;
-import org.inventivetalent.bossbar.BossBarAPI;
-import org.inventivetalent.bossbar.BossBarAPI.Color;
-import org.inventivetalent.bossbar.BossBarAPI.Style;
 import org.mcsg.survivalgames.util.MessageUtil;
 
 public class MessageManager {
@@ -70,30 +66,7 @@ public class MessageManager {
 
     }
 
-    public void sendBossMessage(PrefixType type, String input, Player player, Color color, Style style, Integer timeout, Integer interval, String... args) {
-        String msg = SettingsManager.getInstance().getMessageConfig().getString("messages." + input);
-        boolean enabled = SettingsManager.getInstance().getMessageConfig().getBoolean("messages." + input + "_enabled", true);
-        if (msg == null) {
-            player.sendMessage(ChatColor.RED + "Failed to load message for messages." + input);
-            return;
-        }
-        if (!enabled) {
-            return;
-        }
-        if (args != null && args.length != 0) {
-            msg = MessageUtil.replaceVars(msg, args);
-        }
-        msg = MessageUtil.replaceColors(msg);
-
-        BossBar bossBar = BossBarAPI.addBar(player, // The receiver of the BossBar
-                new TextComponent(msg), // Displayed message
-                color, // Color of the bar
-                style, // Bar style
-                1.0f, // Progress (0.0 - 1.0)
-                timeout, // Timeout
-                interval); // Timeout-interval
-
-    }
+    
 
     /**
      * SendMessage

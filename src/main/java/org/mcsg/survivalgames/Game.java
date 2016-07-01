@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -20,8 +21,6 @@ import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
-import org.inventivetalent.bossbar.BossBar;
-import org.inventivetalent.bossbar.BossBarAPI;
 import org.mcsg.survivalgames.MessageManager.PrefixType;
 import org.mcsg.survivalgames.api.PlayerJoinArenaEvent;
 import org.mcsg.survivalgames.api.PlayerKilledEvent;
@@ -31,10 +30,6 @@ import org.mcsg.survivalgames.logging.QueueManager;
 import org.mcsg.survivalgames.stats.StatsManager;
 import org.mcsg.survivalgames.util.ItemReader;
 import org.mcsg.survivalgames.util.Kit;
-
-import net.md_5.bungee.api.chat.TextComponent;
-import org.inventivetalent.bossbar.BossBarAPI.Color;
-import org.inventivetalent.bossbar.BossBarAPI.Style;
 
 //Data container for a game
 public class Game {
@@ -47,7 +42,7 @@ public class Game {
     private GameMode mode = GameMode.DISABLED;
     private ArrayList<Player> activePlayers = new ArrayList<Player>();
     private ArrayList<Player> inactivePlayers = new ArrayList<Player>();
-    private ArrayList<Player> spectators = new ArrayList<Player>();
+    private ArrayList< String> spectators = new ArrayList< String>();
     private ArrayList<Player> queue = new ArrayList<Player>();
     private HashMap<String, Object> flags = new HashMap<String, Object>();
     HashMap<Player, Integer> nextspec = new HashMap<Player, Integer>();
@@ -131,8 +126,6 @@ public class Game {
         healthObj.setDisplaySlot(DisplaySlot.BELOW_NAME);
         healthObj.setDisplayName("/ 20");
 
-        startBoardUpdater();
-
         hookvars.put("arena", gameID + "");
         hookvars.put("maxplayers", spawnCount + "");
         hookvars.put("activeplayers", "0");
@@ -140,27 +133,28 @@ public class Game {
         mode = GameMode.WAITING;
     }
 
-    /* Scoreboard Stuff - Keiaxx */
+    /*
+     * 
+     * ################################################
+     * 
+     *              SCOREBOARD STUFF
+     * 
+     * ################################################
+     * 
+     * 
+     */
     public void initBoard(Player p) {
-
         sendScore(gameObj, ChatColor.GREEN + "Alive:", getActivePlayers(), false);
         sendScore(gameObj, ChatColor.RED + "Dead:", getInactivePlayers(), false);
         sendScore(gameObj, ChatColor.YELLOW + "Spectators:", getSpectatingPlayers(), false);
 
         p.setScoreboard(gameBoard);
-
     }
 
     public void updateObjectives() {
-
         sendScore(gameObj, ChatColor.GREEN + "Alive:", getActivePlayers(), false);
         sendScore(gameObj, ChatColor.RED + "Dead:", getInactivePlayers(), false);
         sendScore(gameObj, ChatColor.YELLOW + "Spectators:", getSpectatingPlayers(), false);
-
-    }
-
-    public int getSpectatingPlayers() {
-        return spectators.size();
     }
 
     public void sendScore(Objective objective, String title, int value, Boolean fupdate) {
@@ -178,17 +172,22 @@ public class Game {
 
     }
 
-    //MARK CHECK HERE
     public void startBoardUpdater() {
-
         boardTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(GameManager.getInstance().getPlugin(), new Runnable() {
             @Override
             public void run() {
-
                 updateObjectives();
-
             }
         }, 0, 10);
+    }
+
+    public void removeScoreboard(final Player p) {
+        Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(GameManager.getInstance().getPlugin(), new Runnable() {
+            @Override
+            public void run() {
+                p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+            }
+        }, 20L);
     }
 
     /* End Scoreboard Stuff */
@@ -454,16 +453,13 @@ public class Game {
         voted.add(pl);
         msgmgr.sendFMessage(PrefixType.INFO, "game.playervote", pl, "player-" + pl.getName());
         HookManager.getInstance().runHook("PLAYER_VOTE", "player-" + pl.getName());
-        /*
-         * for(Player p: activePlayers){
-         * p.sendMessage(ChatColor.AQUA+pl.getName()+
-         * " Voted to start the game! "+ Math.round((vote +0.0) /
-         * ((getActivePlayers() +0.0)*100))
-         * +"/"+((c.getInt("auto-start-vote")+0.0))+"%"); }
-         */
-        // Bukkit.getServer().broadcastPrefixType((vote +0.0) /
-        // (getActivePlayers() +0.0) +"% voted, needs
-        // "+(c.getInt("auto-start-vote")+0.0)/100);
+        
+        for (Player p : activePlayers) {
+
+            msgmgr.sendMessage(PrefixType.INFO, pl.getName() + " voted to start the game! " + vote + "/" + this.getActivePlayers() + " players have voted.", p);
+
+        }
+        
         if ((((vote + 0.0) / (getActivePlayers() + 0.0)) >= (config.getInt("auto-start-vote") + 0.0) / 100) && getActivePlayers() > 1) {
             countdown(config.getInt("auto-start-time"));
             for (Player p : activePlayers) {
@@ -485,6 +481,7 @@ public class Game {
      * 
      */
     public void startGame() {
+
         if (mode == GameMode.INGAME) {
             return;
         }
@@ -534,6 +531,8 @@ public class Game {
         }
 
         mode = GameMode.INGAME;
+        startBoardUpdater();
+
         LobbyManager.getInstance().updateWall(gameID);
         MessageManager.getInstance().broadcastFMessage(PrefixType.INFO, "broadcast.gamestarted", "arena-" + gameID);
 
@@ -568,20 +567,34 @@ public class Game {
             tid = Bukkit.getScheduler().scheduleSyncRepeatingTask(GameManager.getInstance().getPlugin(), new Runnable() {
                 @Override
                 public void run() {
+
                     if (count > 0) {
                         if (count % 10 == 0) {
                             msgFall(PrefixType.INFO, "game.countdown", "t-" + count);
                         }
-                        if (count < 6) {
+                        if (count == 60) {
+                        }
+                        if (count < 10) {
                             msgFall(PrefixType.INFO, "game.countdown", "t-" + count);
+                            for (Player p : activePlayers) {
+                                p.playSound(p.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1);
 
+                            }
                         }
                         count--;
-                        LobbyManager.getInstance().updateWall(gameID);
+                        //LobbyManager.getInstance().updateWall(gameID);
                     } else {
+
                         startGame();
-                        Bukkit.getScheduler().cancelTask(tid);
+
                         countdownRunning = false;
+                        for (Player p : activePlayers) {
+                            p.playSound(p.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1.7f);
+                            initBoard(p);
+                        }
+
+                        Bukkit.getScheduler().cancelTask(tid);
+
                     }
                 }
             }, 0, 20);
@@ -603,9 +616,9 @@ public class Game {
         p.teleport(SettingsManager.getInstance().getLobbySpawn());
         /// $("Teleporting to lobby");
         if (mode == GameMode.INGAME) {
+            
             killPlayer(p, b);
-            p.setScoreboard(manager.getNewScoreboard());
-
+            
         } else {
             sm.removePlayer(p, gameID);
             // if (!b)
@@ -620,21 +633,16 @@ public class Game {
                 }
             }
 
-            p.setScoreboard(manager.getNewScoreboard());
-
             LobbyManager.getInstance().clearSigns(gameID);
         }
 
         HookManager.getInstance().runHook("PLAYER_REMOVED", "player-" + p.getName());
-
+        
+        removeScoreboard(p);
         PlayerLeaveArenaEvent pl = new PlayerLeaveArenaEvent(p, this, b);
         Bukkit.getServer().getPluginManager().callEvent(pl);
 
         LobbyManager.getInstance().updateWall(gameID);
-    }
-
-    public void playerLeave(Player p) {
-
     }
 
     /*
@@ -649,6 +657,7 @@ public class Game {
      */
     public void killPlayer(Player p, boolean left) {
         try {
+            
             clearInv(p);
             if (!left) {
                 p.teleport(SettingsManager.getInstance().getLobbySpawn());
@@ -674,7 +683,7 @@ public class Game {
                             if (p.getLastDamageCause().getEntityType() == EntityType.PLAYER) {
                                 Player killer = p.getKiller();
 
-                                msgFallBoss(PrefixType.INFO, "death." + p.getLastDamageCause().getEntityType(), BossBarAPI.Color.BLUE, BossBarAPI.Style.NOTCHED_20,
+                                msgFall(PrefixType.INFO, "death." + p.getLastDamageCause().getEntityType(),
                                         "player-" + (SurvivalGames.auth.contains(p.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "") + p.getName(),
                                         "killer-" + ((killer != null) ? (SurvivalGames.auth.contains(killer.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "")
                                                 + killer.getName() : "Unknown"),
@@ -685,7 +694,7 @@ public class Game {
                                 }
 
                             } else {
-                                msgFallBoss(PrefixType.INFO, "death." + p.getLastDamageCause().getEntityType(), BossBarAPI.Color.BLUE, BossBarAPI.Style.NOTCHED_20, "player-"
+                                msgFall(PrefixType.INFO, "death." + p.getLastDamageCause().getEntityType(), "player-"
                                         + (SurvivalGames.auth.contains(p.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "")
                                         + p.getName(), "killer-" + p.getLastDamageCause().getEntityType());
 
@@ -693,7 +702,7 @@ public class Game {
 
                             break;
                         default:
-                            msgFallBoss(PrefixType.INFO, "death." + p.getLastDamageCause().getCause().name(), BossBarAPI.Color.BLUE, BossBarAPI.Style.NOTCHED_20,
+                            msgFall(PrefixType.INFO, "death." + p.getLastDamageCause().getCause().name(),
                                     "player-" + (SurvivalGames.auth.contains(p.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "") + p.getName(),
                                     "killer-" + p.getLastDamageCause().getCause());
 
@@ -717,11 +726,13 @@ public class Game {
                 playerWin(p);
                 endGame();
             }
+            
+            removeScoreboard(p);
+
             LobbyManager.getInstance().updateWall(gameID);
 
-        } catch (Exception e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             SurvivalGames.$("???????????????????????");
-            e.printStackTrace();
             SurvivalGames.$("ID" + gameID);
             SurvivalGames.$(left + "");
             SurvivalGames.$(activePlayers.size() + "");
@@ -775,12 +786,17 @@ public class Game {
         loadspawns();
         LobbyManager.getInstance().updateWall(gameID);
         MessageManager.getInstance().broadcastFMessage(PrefixType.INFO, "broadcast.gameend", "arena-" + gameID);
+        removeScoreboard(win);
+        
+        
 
     }
 
     public void endGame() {
         mode = GameMode.WAITING;
         resetArena();
+        stopBoardUpdater();
+
         LobbyManager.getInstance().clearSigns(gameID);
         LobbyManager.getInstance().updateWall(gameID);
 
@@ -894,6 +910,7 @@ public class Game {
      * 
      */
     public void addSpectator(Player p) {
+
         if (mode != GameMode.INGAME) {
             msgmgr.sendMessage(PrefixType.WARNING, "You can only spectate running games!", p);
             return;
@@ -906,28 +923,27 @@ public class Game {
 
         p.setGameMode(org.bukkit.GameMode.SPECTATOR);
 
-        spectators.add(p);
+        spectators.add(p.getName());
         msgmgr.sendMessage(PrefixType.INFO, "You are now spectating! Use /sg spectate again to return to the lobby.", p);
         msgmgr.sendMessage(PrefixType.INFO, "Left click to teleport to the in-game players.", p);
         nextspec.put(p, 0);
+
+        initBoard(p);
     }
 
     public void removeSpectator(Player p) {
         ArrayList<Player> players = new ArrayList<Player>();
         players.addAll(activePlayers);
         players.addAll(inactivePlayers);
-        p.setScoreboard(manager.getNewScoreboard());
         p.setGameMode(org.bukkit.GameMode.SURVIVAL);
         p.setFallDistance(0);
         p.setHealth(p.getMaxHealth());
         p.setFoodLevel(20);
         p.setSaturation(20);
         p.teleport(SettingsManager.getInstance().getLobbySpawn());
+        removeScoreboard(p);
 
-        // Bukkit.getServer().broadcastPrefixType("Removing Spec "+p.getName()+"
-        // "+spectators.size()+" left");
-        spectators.remove(p);
-        // Bukkit.getServer().broadcastPrefixType("Removed");
+        spectators.remove(p.getName());
 
         nextspec.remove(p);
     }
@@ -935,10 +951,14 @@ public class Game {
     public void clearSpecs() {
 
         for (int a = 0; a < spectators.size(); a = 0) {
-            removeSpectator(Bukkit.getPlayerExact(spectators.get(0).getName()));
+            removeSpectator(Bukkit.getPlayerExact(spectators.get(0)));
         }
         spectators.clear();
         nextspec.clear();
+    }
+
+    public int getSpectatingPlayers() {
+        return spectators.size();
     }
 
     public HashMap<Player, Integer> getNextSpec() {
@@ -1128,31 +1148,4 @@ public class Game {
             msgmgr.sendFMessage(type, msg, p, vars);
         }
     }
-
-    public void msgFallBoss(PrefixType type, String msg, Color color, Style style, String... vars) {
-        for (Player p : getAllPlayers()) {
-            msgmgr.sendBossMessage(type, msg, p, color, style, 20, 2, vars);
-        }
-    }
-
-    /*
-     * public void randomTrap() {
-     * 
-     * World world = SettingsManager.getGameWorld(gameID);
-     * 
-     * double xcord; double zcord; double ycord = 80; Random rand = new
-     * Random(); xcord = rand.nextInt(1000); zcord = rand.nextInt(1000);
-     * Location trap = new Location(world, xcord, ycord, zcord); boolean isAir =
-     * true;
-     * 
-     * while(isAir == true) { ycord--; Byte blockData =
-     * trap.getBlock().getData(); if(blockData != 0) {
-     * trap.getBlock().setType(Material.AIR); ycord--;
-     * trap.getBlock().setType(Material.AIR); ycord--;
-     * trap.getBlock().setType(Material.AIR); ycord--;
-     * trap.getBlock().setType(Material.LAVA); isAir = false; } else { isAir =
-     * true; } }
-     * 
-     * }
-     */
 }
