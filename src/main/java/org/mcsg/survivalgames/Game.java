@@ -14,6 +14,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Score;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.ScoreboardManager;
+import org.inventivetalent.bossbar.BossBar;
+import org.inventivetalent.bossbar.BossBarAPI;
 import org.mcsg.survivalgames.MessageManager.PrefixType;
 import org.mcsg.survivalgames.api.PlayerJoinArenaEvent;
 import org.mcsg.survivalgames.api.PlayerKilledEvent;
@@ -23,6 +31,10 @@ import org.mcsg.survivalgames.logging.QueueManager;
 import org.mcsg.survivalgames.stats.StatsManager;
 import org.mcsg.survivalgames.util.ItemReader;
 import org.mcsg.survivalgames.util.Kit;
+
+import net.md_5.bungee.api.chat.TextComponent;
+import org.inventivetalent.bossbar.BossBarAPI.Color;
+import org.inventivetalent.bossbar.BossBarAPI.Style;
 
 //Data container for a game
 public class Game {
@@ -35,7 +47,7 @@ public class Game {
     private GameMode mode = GameMode.DISABLED;
     private ArrayList<Player> activePlayers = new ArrayList<Player>();
     private ArrayList<Player> inactivePlayers = new ArrayList<Player>();
-    private ArrayList<String> spectators = new ArrayList<String>();
+    private ArrayList<Player> spectators = new ArrayList<Player>();
     private ArrayList<Player> queue = new ArrayList<Player>();
     private HashMap<String, Object> flags = new HashMap<String, Object>();
     HashMap<Player, Integer> nextspec = new HashMap<Player, Integer>();
@@ -46,7 +58,7 @@ public class Game {
     private int gcount = 0;
     private FileConfiguration config;
     private FileConfiguration system;
-    private HashMap<Integer, Player> spawns = new HashMap<Integer, Player>();
+    private HashMap< Integer, Player> spawns = new HashMap< Integer, Player>();
     private HashMap<Player, ItemStack[][]> inv_store = new HashMap<Player, ItemStack[][]>();
     private int spawnCount = 0;
     private int vote = 0;
@@ -61,6 +73,12 @@ public class Game {
     private HashMap<String, String> hookvars = new HashMap<String, String>();
     private MessageManager msgmgr = MessageManager.getInstance();
 
+    /* Scoreboard Stuff - Keiaxx */
+    private ScoreboardManager manager;
+    private Scoreboard gameBoard;
+    private Objective gameObj;
+    private Objective healthObj;
+    private int boardTaskID = 0;
 
     public Game(int gameid) {
         gameID = gameid;
@@ -95,13 +113,25 @@ public class Game {
         $(max.toString());
         Location min = new Location(SettingsManager.getGameWorld(gameID), Math.min(x, x1), Math.min(y, y1), Math.min(z, z1));
         $(min.toString());
-        
-        
-        
 
         arena = new Arena(min, max);
 
         loadspawns();
+
+        manager = Bukkit.getScoreboardManager();
+        gameBoard = manager.getNewScoreboard();
+        gameObj = gameBoard.registerNewObjective("arena" + gameID, "dummy");
+
+        gameObj.setDisplayName("Game Stats");
+
+        gameObj.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        gameBoard.registerNewObjective("showhealth", "health");
+        healthObj = gameBoard.getObjective("showhealth");
+        healthObj.setDisplaySlot(DisplaySlot.BELOW_NAME);
+        healthObj.setDisplayName("/ 20");
+
+        startBoardUpdater();
 
         hookvars.put("arena", gameID + "");
         hookvars.put("maxplayers", spawnCount + "");
@@ -110,6 +140,58 @@ public class Game {
         mode = GameMode.WAITING;
     }
 
+    /* Scoreboard Stuff - Keiaxx */
+    public void initBoard(Player p) {
+
+        sendScore(gameObj, ChatColor.GREEN + "Alive:", getActivePlayers(), false);
+        sendScore(gameObj, ChatColor.RED + "Dead:", getInactivePlayers(), false);
+        sendScore(gameObj, ChatColor.YELLOW + "Spectators:", getSpectatingPlayers(), false);
+
+        p.setScoreboard(gameBoard);
+
+    }
+
+    public void updateObjectives() {
+
+        sendScore(gameObj, ChatColor.GREEN + "Alive:", getActivePlayers(), false);
+        sendScore(gameObj, ChatColor.RED + "Dead:", getInactivePlayers(), false);
+        sendScore(gameObj, ChatColor.YELLOW + "Spectators:", getSpectatingPlayers(), false);
+
+    }
+
+    public int getSpectatingPlayers() {
+        return spectators.size();
+    }
+
+    public void sendScore(Objective objective, String title, int value, Boolean fupdate) {
+        Score score = objective.getScore(Bukkit.getOfflinePlayer(title));
+        if (fupdate) {
+            score.setScore(-1);
+        }
+        score.setScore(value);
+    }
+
+    public void stopBoardUpdater() {
+
+        Bukkit.getScheduler().cancelTask(boardTaskID);
+        debug("Stopping board updater for arena " + getName() + " task ID :" + boardTaskID);
+
+    }
+
+    //MARK CHECK HERE
+    public void startBoardUpdater() {
+
+        boardTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(GameManager.getInstance().getPlugin(), new Runnable() {
+            @Override
+            public void run() {
+
+                updateObjectives();
+
+            }
+        }, 0, 10);
+    }
+
+    /* End Scoreboard Stuff */
     public void reloadFlags() {
         flags = SettingsManager.getInstance().getGameFlags(gameID);
     }
@@ -219,9 +301,9 @@ public class Game {
                     return false;
                 }
                 boolean placed = false;
-                int spawnCount = SettingsManager.getInstance().getSpawnCount(gameID);
+                int spawnCount2 = SettingsManager.getInstance().getSpawnCount(gameID);
 
-                for (int a = 1; a <= spawnCount; a++) {
+                for (int a = 1; a <= spawnCount2; a++) {
                     if (spawns.get(a) == null) {
                         placed = true;
                         spawns.put(a, p);
@@ -247,6 +329,9 @@ public class Game {
                         if (spawnCount == activePlayers.size()) {
                             countdown(5);
                         }
+
+                        initBoard(p);
+
                         break;
                     }
                 }
@@ -376,13 +461,13 @@ public class Game {
          * ((getActivePlayers() +0.0)*100))
          * +"/"+((c.getInt("auto-start-vote")+0.0))+"%"); }
          */
-		// Bukkit.getServer().broadcastPrefixType((vote +0.0) /
+        // Bukkit.getServer().broadcastPrefixType((vote +0.0) /
         // (getActivePlayers() +0.0) +"% voted, needs
         // "+(c.getInt("auto-start-vote")+0.0)/100);
         if ((((vote + 0.0) / (getActivePlayers() + 0.0)) >= (config.getInt("auto-start-vote") + 0.0) / 100) && getActivePlayers() > 1) {
             countdown(config.getInt("auto-start-time"));
             for (Player p : activePlayers) {
-				// p.sendMessage(ChatColor.LIGHT_PURPLE + "Game Starting in " +
+                // p.sendMessage(ChatColor.LIGHT_PURPLE + "Game Starting in " +
                 // c.getInt("auto-start-time"));
                 msgmgr.sendMessage(PrefixType.INFO, "Game starting in " + config.getInt("auto-start-time") + "!", p);
             }
@@ -416,6 +501,12 @@ public class Game {
             startTime = new Date().getTime();
             for (Player pl : activePlayers) {
                 pl.setHealth(pl.getMaxHealth());
+
+                for (PotionEffect effect : pl.getActivePotionEffects()) {
+                    pl.removePotionEffect(effect.getType());
+                }
+                pl.setGameMode(org.bukkit.GameMode.SURVIVAL);
+
                 // clearInv(pl);
                 msgmgr.sendFMessage(PrefixType.INFO, "game.goodluck", pl);
             }
@@ -508,23 +599,29 @@ public class Game {
      * 
      * 
      */
-    public void removePlayer(Player p, boolean b) {
+    public void removePlayer(final Player p, boolean b) {
         p.teleport(SettingsManager.getInstance().getLobbySpawn());
         /// $("Teleporting to lobby");
         if (mode == GameMode.INGAME) {
             killPlayer(p, b);
+            p.setScoreboard(manager.getNewScoreboard());
+
         } else {
             sm.removePlayer(p, gameID);
-			// if (!b)
+            // if (!b)
             // p.teleport(SettingsManager.getInstance().getLobbySpawn());
             restoreInv(p);
             activePlayers.remove(p);
             inactivePlayers.remove(p);
+
             for (Object in : spawns.keySet().toArray()) {
                 if (spawns.get(in) == p) {
                     spawns.remove(in);
                 }
             }
+
+            p.setScoreboard(manager.getNewScoreboard());
+
             LobbyManager.getInstance().clearSigns(gameID);
         }
 
@@ -567,6 +664,7 @@ public class Game {
             activePlayers.remove(p);
             inactivePlayers.add(p);
             PlayerKilledEvent pk = null;
+
             if (left) {
                 msgFall(PrefixType.INFO, "game.playerleavegame", "player-" + p.getName());
             } else {
@@ -575,32 +673,33 @@ public class Game {
                         case ENTITY_ATTACK:
                             if (p.getLastDamageCause().getEntityType() == EntityType.PLAYER) {
                                 Player killer = p.getKiller();
-                                msgFall(PrefixType.INFO, "death." + p.getLastDamageCause().getEntityType(), "player-" + (SurvivalGames.auth.contains(p.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "") + p.getName(), "killer-" + ((killer != null) ? (SurvivalGames.auth.contains(killer.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "") + killer.getName() : "Unknown"), "item-" + ((killer != null) ? ItemReader.getFriendlyItemName(killer.getItemInHand().getType()) : "Unknown Item"));
-                                if (killer != null && p != null) {
+
+                                msgFallBoss(PrefixType.INFO, "death." + p.getLastDamageCause().getEntityType(), BossBarAPI.Color.BLUE, BossBarAPI.Style.NOTCHED_20,
+                                        "player-" + (SurvivalGames.auth.contains(p.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "") + p.getName(),
+                                        "killer-" + ((killer != null) ? (SurvivalGames.auth.contains(killer.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "")
+                                                + killer.getName() : "Unknown"),
+                                        "item-" + ((killer != null) ? ItemReader.getFriendlyItemName(killer.getItemInHand().getType()) : "Unknown Item"));
+
+                                if (killer != null) {
                                     sm.addKill(killer, p, gameID);
                                 }
-                                pk = new PlayerKilledEvent(p, this, killer, p.getLastDamageCause().getCause());
+
                             } else {
-                                msgFall(PrefixType.INFO, "death." + p.getLastDamageCause().getEntityType(), "player-" + (SurvivalGames.auth.contains(p.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "") + p.getName(), "killer-" + p.getLastDamageCause().getEntityType());
-                                pk = new PlayerKilledEvent(p, this, null, p.getLastDamageCause().getCause());
+                                msgFallBoss(PrefixType.INFO, "death." + p.getLastDamageCause().getEntityType(), BossBarAPI.Color.BLUE, BossBarAPI.Style.NOTCHED_20, "player-"
+                                        + (SurvivalGames.auth.contains(p.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "")
+                                        + p.getName(), "killer-" + p.getLastDamageCause().getEntityType());
 
                             }
+
                             break;
                         default:
-                            msgFall(PrefixType.INFO, "death." + p.getLastDamageCause().getCause().name(), "player-" + (SurvivalGames.auth.contains(p.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "") + p.getName(), "killer-" + p.getLastDamageCause().getCause());
-                            pk = new PlayerKilledEvent(p, this, null, p.getLastDamageCause().getCause());
+                            msgFallBoss(PrefixType.INFO, "death." + p.getLastDamageCause().getCause().name(), BossBarAPI.Color.BLUE, BossBarAPI.Style.NOTCHED_20,
+                                    "player-" + (SurvivalGames.auth.contains(p.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "") + p.getName(),
+                                    "killer-" + p.getLastDamageCause().getCause());
 
                             break;
                     }
-                    Bukkit.getServer().getPluginManager().callEvent(pk);
-
-                    if (getActivePlayers() > 1) {
-                        for (Player pl : getAllPlayers()) {
-                            msgmgr.sendMessage(PrefixType.INFO, ChatColor.DARK_AQUA + "There are " + ChatColor.YELLOW + "" + getActivePlayers() + ChatColor.DARK_AQUA + " players remaining!", pl);
-                        }
-                    }
                 }
-
             }
 
             for (Player pe : activePlayers) {
@@ -800,21 +899,16 @@ public class Game {
             return;
         }
 
-        saveInv(p);
         clearInv(p);
         p.teleport(SettingsManager.getInstance().getSpawnPoint(gameID, 1).add(0, 10, 0));
 
         HookManager.getInstance().runHook("PLAYER_SPECTATE", "player-" + p.getName());
 
-        for (Player pl : Bukkit.getOnlinePlayers()) {
-            pl.hidePlayer(p);
-        }
+        p.setGameMode(org.bukkit.GameMode.SPECTATOR);
 
-        p.setAllowFlight(true);
-        p.setFlying(true);
-        spectators.add(p.getName());
+        spectators.add(p);
         msgmgr.sendMessage(PrefixType.INFO, "You are now spectating! Use /sg spectate again to return to the lobby.", p);
-        msgmgr.sendMessage(PrefixType.INFO, "Right click while holding shift to teleport to the next ingame player, left click to go back.", p);
+        msgmgr.sendMessage(PrefixType.INFO, "Left click to teleport to the in-game players.", p);
         nextspec.put(p, 0);
     }
 
@@ -822,23 +916,17 @@ public class Game {
         ArrayList<Player> players = new ArrayList<Player>();
         players.addAll(activePlayers);
         players.addAll(inactivePlayers);
-
-        if (p.isOnline()) {
-            for (Player pl : Bukkit.getOnlinePlayers()) {
-                pl.showPlayer(p);
-            }
-        }
-        restoreInv(p);
-        p.setAllowFlight(false);
-        p.setFlying(false);
+        p.setScoreboard(manager.getNewScoreboard());
+        p.setGameMode(org.bukkit.GameMode.SURVIVAL);
         p.setFallDistance(0);
         p.setHealth(p.getMaxHealth());
         p.setFoodLevel(20);
         p.setSaturation(20);
         p.teleport(SettingsManager.getInstance().getLobbySpawn());
-		// Bukkit.getServer().broadcastPrefixType("Removing Spec "+p.getName()+"
+
+        // Bukkit.getServer().broadcastPrefixType("Removing Spec "+p.getName()+"
         // "+spectators.size()+" left");
-        spectators.remove(p.getName());
+        spectators.remove(p);
         // Bukkit.getServer().broadcastPrefixType("Removed");
 
         nextspec.remove(p);
@@ -847,7 +935,7 @@ public class Game {
     public void clearSpecs() {
 
         for (int a = 0; a < spectators.size(); a = 0) {
-            removeSpectator(Bukkit.getPlayerExact(spectators.get(0)));
+            removeSpectator(Bukkit.getPlayerExact(spectators.get(0).getName()));
         }
         spectators.clear();
         nextspec.clear();
@@ -1040,8 +1128,12 @@ public class Game {
             msgmgr.sendFMessage(type, msg, p, vars);
         }
     }
-    
-    
+
+    public void msgFallBoss(PrefixType type, String msg, Color color, Style style, String... vars) {
+        for (Player p : getAllPlayers()) {
+            msgmgr.sendBossMessage(type, msg, p, color, style, 20, 2, vars);
+        }
+    }
 
     /*
      * public void randomTrap() {

@@ -15,6 +15,10 @@ public class TeleportEvent implements Listener {
 		int id = GameManager.getInstance().getPlayerGameId(p);
 		if (id == -1)
 			return;
+                if(p.getGameMode() == org.bukkit.GameMode.SPECTATOR){
+                    p.sendMessage(ChatColor.RED+ "Teleportation using spectator mode menu is not allowed!");
+                    event.setCancelled(true);
+                }
 		if (GameManager.getInstance().getGame(id).isPlayerActive(p) && event.getCause() == PlayerTeleportEvent.TeleportCause.COMMAND) {
 			p.sendMessage(ChatColor.RED + " Cannot teleport while ingame!");
 			event.setCancelled(true);
