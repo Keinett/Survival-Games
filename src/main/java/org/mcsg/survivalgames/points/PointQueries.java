@@ -104,9 +104,9 @@ public final class PointQueries {
         FileConfiguration c = SettingsManager.getInstance().getConfig();
         mysqlQuery("UPDATE `" + PointSystem.getInstance().playerStatTable + "` SET `kills` = `kills`+1 WHERE `name` = '" + player + "'");
 
-        addPoints(player, points);
+        addPoints(player.toLowerCase(), points);
 
-        cachedStats.get(player).addKill();
+        cachedStats.get(player.toLowerCase()).addKill();
     }
 
     public void addWin(final String player, Integer endtime, Integer totaltime, Integer startplayers, Integer gameLength) {
@@ -115,16 +115,16 @@ public final class PointQueries {
 
         mysqlQuery("UPDATE `" + PointSystem.getInstance().playerStatTable + "`SET `playtime` = `playtime`+" + gameLength + ", `win` = `win`+1 WHERE `name` = '" + player + "'");
 
-        addPoints(player, calcPoints);
+        addPoints(player.toLowerCase(), calcPoints);
 
-        cachedStats.get(player).addWin();
+        cachedStats.get(player.toLowerCase()).addWin();
     }
 
     public void addDeath(final String player, final Integer playtime) {
 
         mysqlQuery("UPDATE `" + PointSystem.getInstance().playerStatTable + "` SET `playtime` = `playtime`+" + playtime + ", `deaths` = `deaths`+1 WHERE `name` = '" + player + "'");
 
-        cachedStats.get(player).addDeath();
+        cachedStats.get(player.toLowerCase()).addDeath();
     }
 
     public void addPoints(String player, Integer points) {
@@ -133,7 +133,7 @@ public final class PointQueries {
 
         mysqlQuery("UPDATE `" + PointSystem.getInstance().playerStatTable + "` SET `points` = `points`+" + points + " WHERE `name` = '" + player + "'");
 
-        cachedStats.get(player).addPoints(points);
+        cachedStats.get(player.toLowerCase()).addPoints(points);
 
     }
 

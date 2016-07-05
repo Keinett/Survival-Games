@@ -160,6 +160,7 @@ public class Game {
         hookvars.put("activeplayers", "0");
 
         gameLengthSeconds = config.getInt("deathmatch.time") * 60; // Multiply the given minutes by 60 to get length in seconds
+
         deathmatchEnabled = config.getBoolean("deathmatch.enabled");
 
         mode = GameMode.WAITING;
@@ -181,7 +182,8 @@ public class Game {
         sendScore(gameObj, ChatColor.YELLOW + "Spectators:", getSpectatingPlayers(), false);
 
         if (deathmatchEnabled) {
-            sendScore(gameObj, ChatColor.YELLOW + "Time Left:", gameLengthSeconds, false);
+            int length = (int) gameLengthSeconds / 60;
+            sendScore(gameObj, ChatColor.YELLOW + "Time Left:", length, false);
         }
 
         p.setScoreboard(gameBoard);
@@ -193,7 +195,8 @@ public class Game {
         sendScore(gameObj, ChatColor.YELLOW + "Spectators:", getSpectatingPlayers(), false);
 
         if (deathmatchEnabled) {
-            sendScore(gameObj, ChatColor.YELLOW + "Time Left:", gameLengthSeconds, false);
+            int length = (int) gameLengthSeconds / 60;
+            sendScore(gameObj, ChatColor.YELLOW + "Time Left:", length, false);
         }
     }
 
@@ -855,7 +858,6 @@ public class Game {
     }
 
     public void endGame() {
-        startingPlayers.clear();
         mode = GameMode.WAITING;
         resetArena();
         stopBoardUpdater();
@@ -931,6 +933,14 @@ public class Game {
 
         mode = GameMode.RESETING;
         endgameRunning = false;
+
+        isPvpEnabled = true;
+        dmCountdownRunning = false;
+        inDeathmatch = false;
+
+        startingPlayers.clear();
+        Bukkit.getScheduler().cancelTask(countdownTaskID);
+        gameLengthSeconds = config.getInt("deathmatch.time") * 60;
 
         Bukkit.getScheduler().cancelTask(endgameTaskID);
         GameManager.getInstance().gameEndCallBack(gameID);
