@@ -15,11 +15,6 @@ config-version: 3
 #Enable debug messages
 debug: false
 
-#Enables the udpdate checker. This will enabled
-#anyone with the perm sg.system.updatenotify to
-#be notified when a new update is avalible
-check-for-updates: true
-
 #Set how many players are needed for the game
 #to auto-start. Once the player limit is reached
 #it will wait for x amount of seconds for
@@ -99,21 +94,36 @@ rollback:
 #then a lighting strike will be fired at the
 #location of each player every x seconds to
 #notify the other players of their location
+#If playerGlow is enabled, players will have
+#a randomly colored glow around them to allow
+#players to easily find one another.
 endgame:
   players: 3
+  playerGlow: true
   fire-lighting:
     enabled: true
     interval: 20
   
   
-#If enabled, after x amount of time, each player
-#remaing will be teleported to the center of the
-#arena for a death match. If they have not been 
-#killed after killtime, the game will end.
+# If disabled, games can essentially last forever if two people decide to
+# not do anything lol.
+# This mode teleports players to the center of the map, defined by the first
+# spawn point. Once teleported, the deathmatch starts, and a world border of
+# a specified radius takes effect to disallow users from running away.
+# If playerGlow is enabled, players will have
+# a randomly colored glow around them to allow
+# players to easily find one another.
+
 deathmatch:
   enabled: false
+  # Time until deathmatch, in minutes
   time: 30
-  killtime: 5
+  playerGlow: true
+  border:
+     enabled: true
+     # Radius in Blocks
+     radius: 30
+  
   
   
 #Settings for connecting to and 
@@ -130,7 +140,14 @@ sql:
   pass: ''
   database: 'survivalgames'
   prefix: 'sg_'
+ 
+ 
+# Enable or disable points tracking. If enabled,
+# sql settings above MUST be set up or else plugin
+# will be disabled upon startup
 
+points:
+  enabled: false
 
 ###########################################################
 ################### Endgame Compass #######################
@@ -150,23 +167,13 @@ compass:
 
 
 stats:
-  enabled: false
-  webserver:
-    enabled: false
-    port: 880
   points:
-    kill: 10
-    win: 100
+    # The number of points a player earns per kill
+    kill: 2
     position: 7
     killstreak:
       base: 10
       multiplier: 2
-  killstreak:
-    level1: '&e{player}&7 got a Double Kill!'
-    level2: '&e{player}&9 got a Multi Kill!'
-    level3: '&e{player}&5 got an Ultra Kill!'
-    level4: '&e{player}&4 got an Unbelievable Kill!'
-    level5: '&e{player}&a&kii&4&l Unbelievable+!&a&kii'
     
     
     

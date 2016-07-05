@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mcsg</groupId>
     <artifactId>survivalgames</artifactId>
-    <version>0.6.1</version>
+    <version>0.7.0</version>
     <name>SurvivalGames</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -21,10 +21,6 @@
             <id>sk89q-repo</id>
             <url>http://maven.sk89q.com/repo/</url>
         </repository>  
-        <repository>
-            <id>inventive-repo</id>
-            <url>http://repo.inventivetalent.org/content/groups/public/</url>
-        </repository>
     </repositories>
     <build>
         <plugins>

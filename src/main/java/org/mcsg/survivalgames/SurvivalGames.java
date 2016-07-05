@@ -1,7 +1,6 @@
 package org.mcsg.survivalgames;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -31,12 +30,11 @@ import org.mcsg.survivalgames.events.TeleportEvent;
 import org.mcsg.survivalgames.hooks.HookManager;
 import org.mcsg.survivalgames.logging.LoggingManager;
 import org.mcsg.survivalgames.logging.QueueManager;
-import org.mcsg.survivalgames.stats.StatsManager;
 import org.mcsg.survivalgames.util.ChestRatioStorage;
-import org.mcsg.survivalgames.util.DatabaseManager;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import org.mcsg.survivalgames.events.CompassEvents;
+import org.mcsg.survivalgames.points.PointSystem;
 
 public class SurvivalGames extends JavaPlugin {
 
@@ -76,7 +74,7 @@ public class SurvivalGames extends JavaPlugin {
         "Lexonia",
         "ChaskyT",
         "Anon232",
-        "IngeniousGamer", // :) -Bryce
+        "IngeniousGamer",
         "Pocketkid2",
         "Keiaxx",
         "Rushnett"
@@ -94,7 +92,7 @@ public class SurvivalGames extends JavaPlugin {
             try {
                 g.disable();
             } catch (Exception e) {
-				// will throw useless "tried to register task blah blah error."
+                // will throw useless "tried to register task blah blah error."
                 // Use the method below to reset the arena without a task.
             }
             QueueManager.getInstance().rollback(g.getID(), true);
@@ -107,7 +105,7 @@ public class SurvivalGames extends JavaPlugin {
     public void onEnable() {
         logger = p.getLogger();
 
-		// ensure that all worlds are loaded. Fixes some issues with Multiverse
+        // ensure that all worlds are loaded. Fixes some issues with Multiverse
         // loading after this plugin had started
         getServer().getScheduler().scheduleSyncDelayedTask(this, new Startup(), 10);
 
@@ -120,19 +118,20 @@ public class SurvivalGames extends JavaPlugin {
             datafolder = p.getDataFolder();
 
             PluginManager pm = getServer().getPluginManager();
+            
+
             setCommands();
 
             SettingsManager.getInstance().setup(p);
             MessageManager.getInstance().setup();
             GameManager.getInstance().setup(p);
+            PointSystem.getInstance().setup(p);
 
             try { // try loading everything that uses SQL.
                 FileConfiguration c = SettingsManager.getInstance().getConfig();
-                if (c.getBoolean("stats.enabled")) {
-                    DatabaseManager.getInstance().setup(p);
-                }
                 QueueManager.getInstance().setup();
-                StatsManager.getInstance().setup(p, c.getBoolean("stats.enabled"));
+                PointSystem.getQueryHandler().initStatCache();
+
                 dbcon = true;
             } catch (Exception e) {
                 dbcon = false;
@@ -165,20 +164,22 @@ public class SurvivalGames extends JavaPlugin {
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (GameManager.getInstance().getBlockGameId(p.getLocation()) != -1) {
                     p.teleport(SettingsManager.getInstance().getLobbySpawn());
+                    p.setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard());
+
                 }
             }
-
-            // new Webserver().start();
         }
     }
 
     public void setCommands() {
         getCommand("survivalgames").setExecutor(new CommandHandler(p));
+
         getCommand("join").setExecutor(new CommandHandler(p));
         getCommand("vote").setExecutor(new CommandHandler(p));
         getCommand("spectate").setExecutor(new CommandHandler(p));
         getCommand("games").setExecutor(new CommandHandler(p));
         getCommand("leave").setExecutor(new CommandHandler(p));
+        getCommand("stats").setExecutor(new CommandHandler(p));
     }
 
     public static File getPluginDataFolder() {
@@ -211,4 +212,5 @@ public class SurvivalGames extends JavaPlugin {
             logger.info("[Debug] " + obj);
         }
     }
+
 }

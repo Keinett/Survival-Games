@@ -1,6 +1,5 @@
 package org.mcsg.survivalgames.stats;
 
-import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,7 +8,6 @@ import java.util.Date;
 import java.util.HashMap;
 
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.mcsg.survivalgames.Game;
 import org.mcsg.survivalgames.GameManager;
 import org.mcsg.survivalgames.MessageManager;
@@ -45,33 +43,8 @@ public class StatsManager {
         return instance;
     }
 
-    public void setup(Plugin p, boolean b){
-        enabled = b;
-        if(b){
-            try{
-                PreparedStatement s = dbman.createStatement(" CREATE TABLE "+SettingsManager.getSqlPrefix() + 
-                        "playerstats(id int NOT NULL AUTO_INCREMENT PRIMARY KEY, gameno int,arenaid int, player text, points int,position int," +
-                        " kills int, death int, killed text,time int, ks1 int, ks2 int,ks3 int, ks4 int, ks5 int)");
-
-                PreparedStatement s1 = dbman.createStatement(" CREATE TABLE "+SettingsManager.getSqlPrefix() + 
-                        "gamestats(gameno int NOT NULL AUTO_INCREMENT PRIMARY KEY, arenaid int, players int, winner text, time int )");
-
-
-                DatabaseMetaData dbm = dbman.getMysqlConnection().getMetaData();
-                ResultSet tables = dbm.getTables(null, null, SettingsManager.getSqlPrefix()+"playerstats", null);
-                ResultSet tables1 = dbm.getTables(null, null, SettingsManager.getSqlPrefix()+"gamestats", null);
-
-                if (tables.next()) { }
-                else {
-                    s.execute();
-                }
-                if (tables1.next()) { }
-                else {
-                    s1.execute();
-                }
-            }catch(Exception e){e.printStackTrace();}
-
-        }
+    public void setup(){
+       
     }
 
     public void addArena(int arenaid){

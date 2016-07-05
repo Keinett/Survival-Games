@@ -9,6 +9,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -16,6 +18,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
@@ -27,6 +30,7 @@ import org.mcsg.survivalgames.api.PlayerKilledEvent;
 import org.mcsg.survivalgames.api.PlayerLeaveArenaEvent;
 import org.mcsg.survivalgames.hooks.HookManager;
 import org.mcsg.survivalgames.logging.QueueManager;
+import org.mcsg.survivalgames.points.PointSystem;
 import org.mcsg.survivalgames.stats.StatsManager;
 import org.mcsg.survivalgames.util.ItemReader;
 import org.mcsg.survivalgames.util.Kit;
@@ -40,6 +44,7 @@ public class Game {
     }
 
     private GameMode mode = GameMode.DISABLED;
+    private ArrayList<String> startingPlayers = new ArrayList<String>();
     private ArrayList<Player> activePlayers = new ArrayList<Player>();
     private ArrayList<Player> inactivePlayers = new ArrayList<Player>();
     private ArrayList< String> spectators = new ArrayList< String>();
@@ -49,16 +54,16 @@ public class Game {
     private ArrayList<Integer> tasks = new ArrayList<Integer>();
 
     private Arena arena;
-    private int gameID;
-    private int gcount = 0;
+    private Integer gameID;
+    private Integer gcount = 0;
     private FileConfiguration config;
     private FileConfiguration system;
     private HashMap< Integer, Player> spawns = new HashMap< Integer, Player>();
     private HashMap<Player, ItemStack[][]> inv_store = new HashMap<Player, ItemStack[][]>();
-    private int spawnCount = 0;
-    private int vote = 0;
+    private Integer spawnCount = 0;
+    private Integer vote = 0;
     private boolean disabled = false;
-    private int endgameTaskID = 0;
+    private Integer endgameTaskID = 0;
     private boolean endgameRunning = false;
     private double rbpercent = 0;
     private String rbstatus = "";
@@ -73,7 +78,30 @@ public class Game {
     private Scoreboard gameBoard;
     private Objective gameObj;
     private Objective healthObj;
-    private int boardTaskID = 0;
+    private Integer boardTaskID = 0;
+
+    /* Game length time managment */
+    private Date startDate;
+    private Date endDate;
+    private Integer gameLengthSeconds = 1800;
+    private Integer gameElapsedSeconds = 0;
+    final private Integer maximumPointsTime = 1800; // The time it takes until the maximum amount of points can be given
+    private Integer elapsedPointsTime = 0;
+
+    /* Deathmatch */
+    private Boolean deathmatchEnabled = true;
+    public Integer countdownTaskID = 0;
+    public boolean inDeathmatch = false;
+    private Integer numStartPlayers = 0;
+    private Boolean isPvpEnabled = true;
+    private Boolean dmCountdownRunning = false;
+
+    /* Deathmatch Border */
+    private Location rectPoint1;
+    private Location rectPoint2;
+    public boolean isBorderActive;
+    public static final double buffer = 0.5;
+    private HashMap<String, Location> borders = new HashMap<>();
 
     public Game(int gameid) {
         gameID = gameid;
@@ -96,6 +124,7 @@ public class Game {
 
     public void setup() {
         mode = GameMode.LOADING;
+
         int x = system.getInt("sg-system.arenas." + gameID + ".x1");
         int y = system.getInt("sg-system.arenas." + gameID + ".y1");
         int z = system.getInt("sg-system.arenas." + gameID + ".z1");
@@ -130,6 +159,9 @@ public class Game {
         hookvars.put("maxplayers", spawnCount + "");
         hookvars.put("activeplayers", "0");
 
+        gameLengthSeconds = config.getInt("deathmatch.time") * 60; // Multiply the given minutes by 60 to get length in seconds
+        deathmatchEnabled = config.getBoolean("deathmatch.enabled");
+
         mode = GameMode.WAITING;
     }
 
@@ -148,6 +180,10 @@ public class Game {
         sendScore(gameObj, ChatColor.RED + "Dead:", getInactivePlayers(), false);
         sendScore(gameObj, ChatColor.YELLOW + "Spectators:", getSpectatingPlayers(), false);
 
+        if (deathmatchEnabled) {
+            sendScore(gameObj, ChatColor.YELLOW + "Time Left:", gameLengthSeconds, false);
+        }
+
         p.setScoreboard(gameBoard);
     }
 
@@ -155,6 +191,10 @@ public class Game {
         sendScore(gameObj, ChatColor.GREEN + "Alive:", getActivePlayers(), false);
         sendScore(gameObj, ChatColor.RED + "Dead:", getInactivePlayers(), false);
         sendScore(gameObj, ChatColor.YELLOW + "Spectators:", getSpectatingPlayers(), false);
+
+        if (deathmatchEnabled) {
+            sendScore(gameObj, ChatColor.YELLOW + "Time Left:", gameLengthSeconds, false);
+        }
     }
 
     public void sendScore(Objective objective, String title, int value, Boolean fupdate) {
@@ -177,6 +217,10 @@ public class Game {
             @Override
             public void run() {
                 updateObjectives();
+
+                if ((getActivePlayers() == 0 && mode == GameMode.INGAME) || (getActivePlayers() == 0 && mode == GameMode.STARTING) || (getActivePlayers() == 0 && mode == GameMode.FINISHING)) {
+                    endGame();
+                }
             }
         }, 0, 10);
     }
@@ -453,13 +497,13 @@ public class Game {
         voted.add(pl);
         msgmgr.sendFMessage(PrefixType.INFO, "game.playervote", pl, "player-" + pl.getName());
         HookManager.getInstance().runHook("PLAYER_VOTE", "player-" + pl.getName());
-        
+
         for (Player p : activePlayers) {
 
             msgmgr.sendMessage(PrefixType.INFO, pl.getName() + " voted to start the game! " + vote + "/" + this.getActivePlayers() + " players have voted.", p);
 
         }
-        
+
         if ((((vote + 0.0) / (getActivePlayers() + 0.0)) >= (config.getInt("auto-start-vote") + 0.0) / 100) && getActivePlayers() > 1) {
             countdown(config.getInt("auto-start-time"));
             for (Player p : activePlayers) {
@@ -496,7 +540,15 @@ public class Game {
             return;
         } else {
             startTime = new Date().getTime();
+            startDate = new Date();
+
+            isPvpEnabled = true;
+            dmCountdownRunning = false;
+
             for (Player pl : activePlayers) {
+
+                startingPlayers.add(pl.getName());
+
                 pl.setHealth(pl.getMaxHealth());
 
                 for (PotionEffect effect : pl.getActivePotionEffects()) {
@@ -525,13 +577,14 @@ public class Game {
                     }
                 }, config.getInt("grace-period") * 20);
             }
-            if (config.getBoolean("deathmatch.enabled")) {
-                tasks.add(Bukkit.getScheduler().scheduleSyncDelayedTask(GameManager.getInstance().getPlugin(), new DeathMatch(), config.getInt("deathmatch.time") * 20 * 60));
-            }
         }
 
         mode = GameMode.INGAME;
+
+        // Start scoreboard update thread
         startBoardUpdater();
+
+        startGameTimer();
 
         LobbyManager.getInstance().updateWall(gameID);
         MessageManager.getInstance().broadcastFMessage(PrefixType.INFO, "broadcast.gamestarted", "arena-" + gameID);
@@ -616,9 +669,9 @@ public class Game {
         p.teleport(SettingsManager.getInstance().getLobbySpawn());
         /// $("Teleporting to lobby");
         if (mode == GameMode.INGAME) {
-            
+
             killPlayer(p, b);
-            
+
         } else {
             sm.removePlayer(p, gameID);
             // if (!b)
@@ -637,7 +690,7 @@ public class Game {
         }
 
         HookManager.getInstance().runHook("PLAYER_REMOVED", "player-" + p.getName());
-        
+
         removeScoreboard(p);
         PlayerLeaveArenaEvent pl = new PlayerLeaveArenaEvent(p, this, b);
         Bukkit.getServer().getPluginManager().callEvent(pl);
@@ -657,7 +710,7 @@ public class Game {
      */
     public void killPlayer(Player p, boolean left) {
         try {
-            
+
             clearInv(p);
             if (!left) {
                 p.teleport(SettingsManager.getInstance().getLobbySpawn());
@@ -690,6 +743,9 @@ public class Game {
                                         "item-" + ((killer != null) ? ItemReader.getFriendlyItemName(killer.getItemInHand().getType()) : "Unknown Item"));
 
                                 if (killer != null) {
+                                    PointSystem.getQueryHandler().addDeath(p.getName(), gameElapsedSeconds);
+                                    PointSystem.getQueryHandler().addKill(killer.getName(), gameElapsedSeconds, 2);
+
                                     sm.addKill(killer, p, gameID);
                                 }
 
@@ -697,6 +753,7 @@ public class Game {
                                 msgFall(PrefixType.INFO, "death." + p.getLastDamageCause().getEntityType(), "player-"
                                         + (SurvivalGames.auth.contains(p.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "")
                                         + p.getName(), "killer-" + p.getLastDamageCause().getEntityType());
+                                PointSystem.getQueryHandler().addDeath(p.getName(), gameElapsedSeconds);
 
                             }
 
@@ -705,6 +762,7 @@ public class Game {
                             msgFall(PrefixType.INFO, "death." + p.getLastDamageCause().getCause().name(),
                                     "player-" + (SurvivalGames.auth.contains(p.getName()) ? ChatColor.DARK_RED + "" + ChatColor.BOLD : "") + p.getName(),
                                     "killer-" + p.getLastDamageCause().getCause());
+                            PointSystem.getQueryHandler().addDeath(p.getName(), gameElapsedSeconds);
 
                             break;
                     }
@@ -723,10 +781,19 @@ public class Game {
             }
 
             if (activePlayers.size() < 2 && mode != GameMode.WAITING) {
+
+                Player win = activePlayers.get(0);
+
                 playerWin(p);
+
+                PointSystem.getQueryHandler().addWin(win.getName(), elapsedPointsTime, maximumPointsTime, numStartPlayers, gameElapsedSeconds);
+                endDate = new Date();
+
+                PointSystem.getQueryHandler().saveGame(gameID, startingPlayers, win.getName(), endDate, startDate, elapsedPointsTime, maximumPointsTime);
+
                 endGame();
             }
-            
+
             removeScoreboard(p);
 
             LobbyManager.getInstance().updateWall(gameID);
@@ -776,9 +843,6 @@ public class Game {
         win.setFireTicks(0);
         win.setFallDistance(0);
 
-        sm.playerWin(win, gameID, new Date().getTime() - startTime);
-        sm.saveGame(gameID, win, getActivePlayers() + getInactivePlayers(), new Date().getTime() - startTime);
-
         activePlayers.clear();
         inactivePlayers.clear();
         spawns.clear();
@@ -787,12 +851,11 @@ public class Game {
         LobbyManager.getInstance().updateWall(gameID);
         MessageManager.getInstance().broadcastFMessage(PrefixType.INFO, "broadcast.gameend", "arena-" + gameID);
         removeScoreboard(win);
-        
-        
 
     }
 
     public void endGame() {
+        startingPlayers.clear();
         mode = GameMode.WAITING;
         resetArena();
         stopBoardUpdater();
@@ -1036,27 +1099,338 @@ public class Game {
         }
     }
 
-    class DeathMatch implements Runnable {
+    /**
+     *
+     *
+     *
+     * GAME TIMER UNTIL DEATHMATCH
+     *
+     *
+     *
+     */
+    public void startGameTimer() {
 
-        @Override
-        public void run() {
-            for (Player p : activePlayers) {
-                for (int a = 0; a < spawns.size(); a++) {
-                    if (spawns.get(a) == p) {
-                        p.teleport(SettingsManager.getInstance().getSpawnPoint(gameID, a));
-                        break;
+        countdownTaskID = Bukkit.getScheduler().scheduleSyncRepeatingTask(GameManager.getInstance().getPlugin(), new Runnable() {
+            @Override
+            public void run() {
+
+                gameElapsedSeconds++;
+
+                if (elapsedPointsTime < maximumPointsTime) {
+                    elapsedPointsTime++;
+                }
+
+                if (deathmatchEnabled) {
+                    gameLengthSeconds--;
+                }
+
+                if (gameLengthSeconds >= 14) {
+                    if (gameLengthSeconds == 320) {
+                        for (Player play : activePlayers) {
+                            if (play.isOnline()) {
+                                msgmgr.sendMessage(PrefixType.INFO, "The deathmatch will start in 5 minutes!", play);
+                                play.playSound(play.getLocation(), Sound.ENTITY_LIGHTNING_THUNDER, 10, 1);
+                            }
+                        }
                     }
+
+                    if (gameLengthSeconds == 80) {
+                        for (Player play : activePlayers) {
+                            if (play.isOnline()) {
+                                msgmgr.sendMessage(PrefixType.INFO, "The deathmatch will start in 1 minute!", play);
+                                play.playSound(play.getLocation(), Sound.ENTITY_LIGHTNING_THUNDER, 10, 1);
+
+                            }
+                        }
+                    }
+
+                    if (gameLengthSeconds <= 30 && gameLengthSeconds >= 21) {
+
+                        for (Player play : activePlayers) {
+                            if (play.isOnline()) {
+                                int ngameLengthSeconds = gameLengthSeconds - 20;
+                                if (gameLengthSeconds == 30) {
+
+                                    msgmgr.sendMessage(PrefixType.INFO, "Teleportation to cornucopia for deathmatch in " + ngameLengthSeconds + " ...", play);
+                                    play.playSound(play.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1f);
+                                } else {
+                                    msgmgr.sendMessage(PrefixType.INFO, ngameLengthSeconds + " ...", play);
+                                    play.playSound(play.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1f);
+                                }
+                            }
+                        }
+                    }
+
+                    if (gameLengthSeconds == 20) {
+
+                        isPvpEnabled = false;
+                        dmCountdownRunning = true;
+
+                        for (Player p : activePlayers) {
+                            for (int a = 0; a < spawns.size(); a++) {
+                                if (spawns.get(a) == p) {
+
+                                    p.teleport(SettingsManager.getInstance().getSpawnPoint(gameID, a));
+                                    p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 18000, 3));
+                                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1f);
+                                    break;
+                                }
+                            }
+                        }
+
+                    }
+                    if (gameLengthSeconds == 19) {
+
+                        for (Player p : activePlayers) {
+                            for (int a = 0; a < spawns.size(); a++) {
+                                if (spawns.get(a) == p) {
+
+                                    msgmgr.sendMessage(PrefixType.INFO, "Teleported! Deathmatch starting in 5...", p);
+
+                                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1f);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (gameLengthSeconds == 18) {
+                        for (Player p : activePlayers) {
+                            for (int a = 0; a < spawns.size(); a++) {
+                                if (spawns.get(a) == p) {
+                                    msgmgr.sendMessage(PrefixType.INFO, "4 ...", p);
+
+                                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1f);
+                                    break;
+                                }
+                            }
+                        }
+
+                    }
+                    if (gameLengthSeconds == 17) {
+                        for (Player p : activePlayers) {
+                            for (int a = 0; a < spawns.size(); a++) {
+                                if (spawns.get(a) == p) {
+                                    msgmgr.sendMessage(PrefixType.INFO, "3 ...", p);
+
+                                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1f);
+
+                                }
+                            }
+                        }
+
+                    }
+
+                    if (gameLengthSeconds == 16) {
+                        for (Player p : activePlayers) {
+                            for (int a = 0; a < spawns.size(); a++) {
+                                if (spawns.get(a) == p) {
+                                    msgmgr.sendMessage(PrefixType.INFO, "2 ...", p);
+
+                                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1f);
+
+                                }
+                            }
+                        }
+
+                    }
+
+                    if (gameLengthSeconds == 15) {
+                        for (Player p : activePlayers) {
+                            for (int a = 0; a < spawns.size(); a++) {
+                                if (spawns.get(a) == p) {
+                                    msgmgr.sendMessage(PrefixType.INFO, "1 ...", p);
+
+                                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1f);
+
+                                }
+                            }
+                        }
+
+                    }
+
+                    if (gameLengthSeconds == 15) {
+                        for (Player p : activePlayers) {
+                            for (int a = 0; a < spawns.size(); a++) {
+                                if (spawns.get(a) == p) {
+                                    msgmgr.sendMessage(PrefixType.INFO, "0 ...", p);
+
+                                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1f);
+
+                                }
+                            }
+                        }
+
+                    }
+
+                    if (gameLengthSeconds <= 5) {
+                        for (Player play : activePlayers) {
+                            if (play.isOnline()) {
+                                msgmgr.sendMessage(PrefixType.INFO, "Deathmatch starting in " + gameLengthSeconds + " ...", play);
+                                play.playSound(play.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1f);
+
+                            }
+                        }
+                    }
+
+                } else {
+                    if (mode == GameMode.INGAME) {
+
+                        //calculate borders based on first spawnpoint
+                        Integer borderSize = config.getInt("deathmatch.border.radius");
+
+                        Integer spawns = SettingsManager.getInstance().getSpawnCount(gameID);
+
+                        double totalX = 0, totalZ = 0;
+
+                        for (int i = 1; i <= spawns; i++) {
+
+                            totalX += SettingsManager.getInstance().getSpawnPoint(gameID, i).getX();
+                            totalZ += SettingsManager.getInstance().getSpawnPoint(gameID, i).getZ();
+
+                        }
+
+                        //calculate average added / points
+                        double centerX = totalX / spawns;
+                        double centerZ = totalZ / spawns;
+
+                        debug("The calculated center is: X: " + centerX + " Z: " + centerZ + "");
+                        debug("Total number of spawns in arena " + gameID + " : " + spawns);
+                        Location center = new Location(SettingsManager.getGameWorld(gameID), centerX, 0.0, centerZ);
+                        Location center2 = new Location(SettingsManager.getGameWorld(gameID), centerX, 0.0, centerZ);
+
+                        //add the 1337 values to the center vectors to get the border points p1 and p2
+                        Location p1 = center.add(-borderSize, 0, -borderSize);
+                        Location p2 = center2.add(borderSize, 0, borderSize);
+
+                        try {
+                            addBorder(p1, p2);
+                            debug("Borders: P1: " + p1.toString() + " P2: " + p2.toString());
+                        } catch (Exception ex) {
+
+                        }
+
+                        for (Player play : activePlayers) {
+                            if (play.isOnline()) {
+                                msgmgr.sendMessage(PrefixType.INFO, "Fight to the death!!!", play);
+                                play.playSound(play.getLocation(), Sound.BLOCK_NOTE_HARP, 10, 1.6f);
+
+                                if (play.hasPotionEffect(PotionEffectType.BLINDNESS)) {
+                                    play.removePotionEffect(PotionEffectType.BLINDNESS);
+                                }
+
+                            }
+                        }
+
+                        isPvpEnabled = true;
+                        dmCountdownRunning = false;
+                        inDeathmatch = true;
+                    }
+
+                    Bukkit.getScheduler().cancelTask(countdownTaskID);
+
+                    gameLengthSeconds = 0;
                 }
             }
-            tasks.add(Bukkit.getScheduler().scheduleSyncDelayedTask(GameManager.getInstance().getPlugin(), new Runnable() {
-                @Override
-                public void run() {
-                    for (Player p : activePlayers) {
-                        p.getLocation().getWorld().strikeLightning(p.getLocation());
-                    }
-                }
-            }, config.getInt("deathmatch.killtime") * 20 * 60));
+        }, 0, 20);
+
+        if (Bukkit.getScheduler().isCurrentlyRunning(countdownTaskID)) {
+            tasks.add(countdownTaskID);
         }
+
+    }
+
+    /**
+     *
+     * DEATHMATCH BORDER
+     *
+     */
+    public HashMap<String, Location> getBorders() {
+        return borders;
+    }
+
+    public boolean isBorderActive() {
+        return isBorderActive;
+    }
+
+    public boolean isDeathmatch() {
+        return inDeathmatch;
+    }
+
+    public Location getRectPoint1() {
+        return rectPoint1;
+    }
+
+    public Location getRectPoint2() {
+        return rectPoint2;
+    }
+
+    public void addBorder(Location p1, Location p2) throws Exception {
+        rectPoint1 = p1;
+        rectPoint2 = p2;
+
+        // new border is active by default
+        isBorderActive = true;
+
+        if (rectPoint1.getWorld().equals(rectPoint2.getWorld())) {
+
+            borders.put("p1", rectPoint1);
+            borders.put("p2", rectPoint2);
+
+        } else {
+            throw new Exception("Border points are at different worlds.");
+        }
+    }
+
+    public Double[] checkBorder(Location location, HashMap<String, Location> points, double buffer) {
+        // New x and z: null by default
+        Double[] newXZ = {null, null};
+        Location p1 = points.get("p1");
+        Location p2 = points.get("p2");
+
+        // check if player is withing the X borders
+        newXZ[0] = _checkBorder(location.getX(), p1.getX(), p2.getX(), buffer);
+        // check if player is withing the Z borders
+        newXZ[1] = _checkBorder(location.getZ(), p1.getZ(), p2.getZ(), buffer);
+
+        // Do nothing, if no new coordinates have been calculated.
+        if (newXZ[0] == null && newXZ[1] == null) {
+            return null;
+        }
+        return newXZ;
+    }
+
+    public Double _checkBorder(double location, double border1, double border2, double buffer) {
+        double bigBorder = Math.max(border1, border2);
+        double smallBorder = Math.min(border1, border2);
+
+        // if location is between borders do nothing
+        if (location >= smallBorder && location <= bigBorder) {
+            return null;
+        } else {
+            if (location > bigBorder) {
+                // if location is outside of the bigBorder, teleport to the bigBorder
+                return bigBorder - buffer;
+            } else {
+                // if location is outside of the smallBorder, teleport to the smallBorder
+                return smallBorder + buffer;
+            }
+        }
+    }
+
+    public Double goUpUntilFreeSpot(Location newLocation) {
+        // go up in height until the player can stand in AIR
+        Block footBlock = newLocation.getBlock();
+        Block headBlock = newLocation.getBlock().getRelative(BlockFace.UP);
+        while (footBlock.getType() != Material.AIR || headBlock.getType() != Material.AIR) {
+            byte offset = 1;
+            if (headBlock.getType() != Material.AIR) {
+                offset = 2;
+            }
+            footBlock = footBlock.getRelative(0, offset, 0);
+            headBlock = headBlock.getRelative(0, offset, 0);
+        }
+        // set the y value to a spot where the player can stand free
+        return (double) footBlock.getY();
     }
 
     public boolean isBlockInArena(Location v) {
@@ -1097,6 +1471,10 @@ public class Game {
         all.addAll(activePlayers);
         all.addAll(inactivePlayers);
         return all;
+    }
+
+    public boolean inDeathmatchCountdown() {
+        return dmCountdownRunning;
     }
 
     public boolean isSpectator(Player p) {
@@ -1147,5 +1525,9 @@ public class Game {
         for (Player p : getAllPlayers()) {
             msgmgr.sendFMessage(type, msg, p, vars);
         }
+    }
+
+    public Boolean pvpEnabled() {
+        return isPvpEnabled;
     }
 }

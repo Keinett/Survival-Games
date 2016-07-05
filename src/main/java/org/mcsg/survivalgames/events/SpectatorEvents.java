@@ -20,94 +20,162 @@ import org.mcsg.survivalgames.GameManager;
 
 public class SpectatorEvents implements Listener {
 
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onBlockPlace(BlockPlaceEvent event) {
-		if (GameManager.getInstance().isSpectator(event.getPlayer())) {
-			event.setCancelled(true);
-		}
-	}
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        if (GameManager.getInstance().isSpectator(event.getPlayer())) {
+            event.setCancelled(true);
+        }
 
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onBlockDamage(BlockDamageEvent event) {
-		if (GameManager.getInstance().isSpectator(event.getPlayer())) {
-			event.setCancelled(true);
-		}
-	}
+        Integer i = GameManager.getInstance().getPlayerGameId(event.getPlayer());
 
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onBlockBreak(BlockBreakEvent event) {
-		if (GameManager.getInstance().isSpectator(event.getPlayer())) {
-			event.setCancelled(true);
-		}
-	}
+        if (i != -1) {
+            Game g = GameManager.getInstance().getGame(i);
 
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onPlayerClickEvent(PlayerInteractEvent event) {
-		Player player = event.getPlayer();
-		try {
-			if (GameManager.getInstance().isSpectator(player) && player.isSneaking() && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) || GameManager.getInstance().isSpectator(player) && player.isSneaking() && (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK)) {
-				Player[] players = GameManager.getInstance().getGame(GameManager.getInstance().getPlayerSpectateId(player)).getPlayers()[0];
-				Game g = GameManager.getInstance().getGame(GameManager.getInstance().getPlayerSpectateId(player));
+            if (!g.pvpEnabled()) {
+                event.setCancelled(true);
+            }
 
-				int i = g.getNextSpec().get(player);
-				if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_AIR)) {
-					i++;
-				} else if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_AIR) {
-					i--;
-				}
-				if (i > players.length - 1) {
-					i = 0;
-				}
-				if (i < 0) {
-					i = players.length - 1;
-				}
-				g.getNextSpec().put(player, i);
-				Player tpto = players[i];
-                                player.setMetadata("click_teleport", new FixedMetadataValue(GameManager.getInstance().getPlugin(), true));
-				player.teleport(tpto.getLocation());
-				player.sendMessage(ChatColor.AQUA + "You are now spectating " + tpto.getName());
-			} else if (GameManager.getInstance().isSpectator(player)) {
-				event.setCancelled(true);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+        }
+    }
 
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onItemPickup(PlayerPickupItemEvent event) {
-		if (GameManager.getInstance().isSpectator(event.getPlayer())) {
-			event.setCancelled(true);
-		}
-	}
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockDamage(BlockDamageEvent event) {
+        if (GameManager.getInstance().isSpectator(event.getPlayer())) {
+            event.setCancelled(true);
+        }
 
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onEntityDamage(EntityDamageByEntityEvent event) {
-		if (event.getDamager() instanceof Player) {
-			Player player = (Player) event.getDamager();
-			if (GameManager.getInstance().isSpectator(player)) {
-				event.setCancelled(true);
-			}
-		}
-	}
+        Integer i = GameManager.getInstance().getPlayerGameId(event.getPlayer());
 
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onEntityDamage(EntityDamageEvent event) {
-		if (event.getEntity() instanceof Player) {
-			Player player = (Player) event.getEntity();
-			if (GameManager.getInstance().isSpectator(player)) {
-				event.setCancelled(true);
-			}
-		}
-	}
+        if (i != -1) {
+            Game g = GameManager.getInstance().getGame(i);
 
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onEntityTarget(EntityTargetEvent event) {
-		if (event.getTarget() instanceof Player) {
-			Player player = (Player) event.getTarget();
-			if (GameManager.getInstance().isSpectator(player)) {
-				event.setCancelled(true);
-			}
-		}
-	}
+            if (!g.pvpEnabled()) {
+                event.setCancelled(true);
+            }
+
+        }
+
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (GameManager.getInstance().isSpectator(event.getPlayer())) {
+            event.setCancelled(true);
+        }
+
+        Integer i = GameManager.getInstance().getPlayerGameId(event.getPlayer());
+
+        if (i != -1) {
+            Game g = GameManager.getInstance().getGame(i);
+
+            if (!g.pvpEnabled()) {
+                event.setCancelled(true);
+            }
+
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerClickEvent(PlayerInteractEvent event) {
+        Player player = event.getPlayer();
+        try {
+            if (GameManager.getInstance().isSpectator(player) && player.isSneaking() && (event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) || GameManager.getInstance().isSpectator(player) && player.isSneaking() && (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK)) {
+                Player[] players = GameManager.getInstance().getGame(GameManager.getInstance().getPlayerSpectateId(player)).getPlayers()[0];
+                Game g = GameManager.getInstance().getGame(GameManager.getInstance().getPlayerSpectateId(player));
+
+                int i = g.getNextSpec().get(player);
+                if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_AIR)) {
+                    i++;
+                } else if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_AIR) {
+                    i--;
+                }
+                if (i > players.length - 1) {
+                    i = 0;
+                }
+                if (i < 0) {
+                    i = players.length - 1;
+                }
+                g.getNextSpec().put(player, i);
+                Player tpto = players[i];
+                player.setMetadata("click_teleport", new FixedMetadataValue(GameManager.getInstance().getPlugin(), true));
+                player.teleport(tpto.getLocation());
+                player.sendMessage(ChatColor.AQUA + "You are now spectating " + tpto.getName());
+            } else if (GameManager.getInstance().isSpectator(player)) {
+                event.setCancelled(true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onItemPickup(PlayerPickupItemEvent event) {
+        if (GameManager.getInstance().isSpectator(event.getPlayer())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onEntityDamage(EntityDamageByEntityEvent event) {
+        if (event.getDamager() instanceof Player) {
+            Player player = (Player) event.getDamager();
+            if (GameManager.getInstance().isSpectator(player)) {
+                event.setCancelled(true);
+            }
+
+            Integer i = GameManager.getInstance().getPlayerGameId(player);
+
+            if (i != -1) {
+                Game g = GameManager.getInstance().getGame(i);
+
+                if (!g.pvpEnabled()) {
+                    event.setCancelled(true);
+                }
+
+            }
+
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onEntityDamage(EntityDamageEvent event) {
+        if (event.getEntity() instanceof Player) {
+            Player player = (Player) event.getEntity();
+            if (GameManager.getInstance().isSpectator(player)) {
+                event.setCancelled(true);
+            }
+
+            Integer i = GameManager.getInstance().getPlayerGameId(player);
+
+            if (i != -1) {
+                Game g = GameManager.getInstance().getGame(i);
+
+                if (!g.pvpEnabled()) {
+                    event.setCancelled(true);
+                }
+
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onEntityTarget(EntityTargetEvent event) {
+        if (event.getTarget() instanceof Player) {
+            Player player = (Player) event.getTarget();
+            if (GameManager.getInstance().isSpectator(player)) {
+                event.setCancelled(true);
+            }
+
+            Integer i = GameManager.getInstance().getPlayerGameId(player);
+
+            if (i != -1) {
+                Game g = GameManager.getInstance().getGame(i);
+
+                if (!g.pvpEnabled()) {
+                    event.setCancelled(true);
+                }
+
+            }
+        }
+    }
 }

@@ -31,6 +31,7 @@ import org.mcsg.survivalgames.commands.SetLobbySpawn;
 import org.mcsg.survivalgames.commands.SetLobbyWall;
 import org.mcsg.survivalgames.commands.SetSpawn;
 import org.mcsg.survivalgames.commands.Spectate;
+import org.mcsg.survivalgames.commands.Stats;
 import org.mcsg.survivalgames.commands.SubCommand;
 import org.mcsg.survivalgames.commands.Teleport;
 import org.mcsg.survivalgames.commands.Vote;
@@ -43,9 +44,11 @@ public class CommandHandler implements CommandExecutor {
     private MessageManager msgmgr = MessageManager.getInstance();
 
     public CommandHandler(Plugin plugin) {
+
         this.plugin = plugin;
         commands = new HashMap<String, SubCommand>();
         helpinfo = new HashMap<String, Integer>();
+
         loadCommands();
         loadHelpInfo();
     }
@@ -73,13 +76,14 @@ public class CommandHandler implements CommandExecutor {
         commands.put("list", new ListPlayers());
         commands.put("tp", new Teleport());
         commands.put("reload", new Reload());
+        commands.put("stats", new Stats());
 		// commands.put("test", new Test());
 
         // commands.put("sponsor", new Sponsor());
     }
 
     private void loadHelpInfo() {
-		// you can do this by iterating thru the hashmap from a certian index
+        // you can do this by iterating thru the hashmap from a certian index
         // btw instead of using a new hashmap,
         // plus, instead of doing three differnet ifs, just iterate thru and
         // check if the value == the page
@@ -176,6 +180,15 @@ public class CommandHandler implements CommandExecutor {
 
             }
         }
+        
+        if (cmd1.getName().equalsIgnoreCase("stats")) {
+            try {
+                commands.get("stats").onCommand(player, args);
+                return true;
+            } catch (Exception e) {
+
+            }
+        }
 
         if (cmd1.getName().equalsIgnoreCase("survivalgames")) {
             if (args == null || args.length < 1) {
@@ -205,6 +218,8 @@ public class CommandHandler implements CommandExecutor {
                 }
                 return true;
             }
+            
+
             String sub = args[0];
             Vector<String> l = new Vector<String>();
             l.addAll(Arrays.asList(args));

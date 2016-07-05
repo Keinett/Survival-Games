@@ -1,5 +1,5 @@
 name: SurvivalGames
-version: 0.6.1-beta
+version: 0.7.0
 main: org.mcsg.survivalgames.SurvivalGames
 authors: [Double0negative, Pocketkid2, Keiaxx, Rushnett]
 description: Fully Automated Hunger Games Plugin!
@@ -26,6 +26,9 @@ commands:
     leave:
         description: Survival Games Command
         usage: /leave
+    stats:
+        description: Survival Games Command
+        usage: /stats <playername>
         
 permissions:
     sg.player.*:
@@ -38,6 +41,7 @@ permissions:
             sg.player.joinlobby: true
             sg.player.sponsor: true
             sg.player.listarenas: true
+            sg.player.stats: true
     sg.lobby.join:
         default: true
     sg.arena.vote:
@@ -70,6 +74,9 @@ permissions:
         default: true
     sg.player.list:
         description: List all players in the arena you are playing in.
+        default: true
+    sg.player.stats:
+        description: Display the stats of the user or specified player.
         default: true
     
     sg.staff.*:
