@@ -2,7 +2,6 @@ package org.mcsg.survivalgames;
 
 import java.util.HashMap;
 import java.util.logging.Logger;
-import net.md_5.bungee.api.chat.TextComponent;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
