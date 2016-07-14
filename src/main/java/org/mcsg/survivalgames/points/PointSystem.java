@@ -15,21 +15,20 @@ public class PointSystem {
     private static PointSystem pSystem = new PointSystem();
 
     private static PointQueries statSQL = new PointQueries();
-    
 
-    public Boolean mySQL = false;
+    private Boolean mySQL = false;
 
-    public String dbHost = null;
-    public int dbPort = 3306;
-    public String dbUser = null;
-    public String dbPass = null;
-    public String dbDatabase = null;
+    private String dbHost = null;
+    private int dbPort = 3306;
+    private String dbUser = null;
+    private String dbPass = null;
+    private String dbDatabase = null;
 
-    public String playerStatTable = null;
-    public String arenaStatTable = null;
+    private String playerStatTable = null;
+    private String arenaStatTable = null;
 
-    public MySQLConnection playerStatHandler; // MySQL handler stats
-    public MySQLConnection arenaStatHandler; // MySQL handler svegames
+    private MySQLConnection playerStatHandler; // MySQL handler stats
+    private MySQLConnection arenaStatHandler; // MySQL handler svegames
 
     private PointSystem() {
 
@@ -39,9 +38,11 @@ public class PointSystem {
 
         FileConfiguration conf = SettingsManager.getInstance().getConfig();
 
+        this.mySQL = SettingsManager.getInstance().getConfig().getBoolean("stats.enabled", true);
+        SurvivalGames.debug("PointSystem: "+this.mySQL);
         // get variables from settings handler
-        if (conf.getBoolean("points.enabled")) {
-            this.mySQL = true;
+        if (this.mySQL) {
+
             this.dbHost = conf.getString("sql.host");
             this.dbUser = conf.getString("sql.user");
             this.dbPass = conf.getString("sql.pass");
@@ -54,12 +55,16 @@ public class PointSystem {
         // Check Settings
         if (this.mySQL) {
             if (this.dbHost.equals("")) {
+                SurvivalGames.debug("MySQL: Config not setup properly. Please check your settings for mysql!");
                 this.mySQL = false;
             } else if (this.dbUser.equals("")) {
+                SurvivalGames.debug("MySQL: Config not setup properly. Please check your settings for mysql!");
                 this.mySQL = false;
             } else if (this.dbPass.equals("")) {
+                SurvivalGames.debug("MySQL: Config not setup properly. Please check your settings for mysql!");
                 this.mySQL = false;
             } else if (this.dbDatabase.equals("")) {
+                SurvivalGames.debug("MySQL: Config not setup properly. Please check your settings for mysql!");
                 this.mySQL = false;
             }
         }
@@ -81,14 +86,14 @@ public class PointSystem {
                 e1.printStackTrace();
             }
 
-            System.out.println("MySQL Initializing");
+            SurvivalGames.debug("MySQL Initializing");
             // Initialize MySQL Handler
 
             if (playerStatHandler.connect(true)) {
-                System.out.println("MySQL connection successful");
+                SurvivalGames.debug("MySQL connection successful");
                 // Check if the tables exist, if not, create them
                 if (!playerStatHandler.tableExists(dbDatabase, playerStatTable)) {
-                    System.out.println("Creating table " + playerStatTable);
+                    SurvivalGames.debug("Creating table " + playerStatTable);
                     final String query = "CREATE TABLE `" + playerStatTable + "` ( `id` int(5) NOT NULL AUTO_INCREMENT,"
                             + " `name` varchar(42) NOT NULL,"
                             + " `kills` int(8) not null default 0,"
@@ -99,7 +104,7 @@ public class PointSystem {
                             + " PRIMARY KEY (`id`) ) AUTO_INCREMENT=1 ;";
                     try {
                         playerStatHandler.executeQuery(query, true);
-                        System.out.println("Table Created");
+                        SurvivalGames.debug("Table Created");
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
@@ -107,16 +112,16 @@ public class PointSystem {
 
                 }
             } else {
-                System.out.println("MySQL connection failed");
+                SurvivalGames.debug("MySQL connection failed");
                 this.mySQL = false;
             }
 
             if (arenaStatHandler.connect(true)) {
-                System.out.println("MySQL connection successful");
+                SurvivalGames.debug("MySQL connection successful");
                 // Check if the tables exist, if not, create them
                 if (!arenaStatHandler.tableExists(dbDatabase, arenaStatTable)) {
 
-                    System.out.println("Creating table " + arenaStatTable);
+                    SurvivalGames.debug("Creating table " + arenaStatTable);
 
                     final String query = "CREATE TABLE `" + arenaStatTable + "` ( `id` int(5) NOT NULL AUTO_INCREMENT,"
                             + " `arena` int(8) not null default 0,"
@@ -128,7 +133,7 @@ public class PointSystem {
                             + " PRIMARY KEY (`id`) ) AUTO_INCREMENT=1 ;";
                     try {
                         arenaStatHandler.executeQuery(query, true);
-                        System.out.println("Table Created");
+                        SurvivalGames.debug("Table Created");
                     } catch (SQLException e) {
                     }
 
@@ -136,7 +141,7 @@ public class PointSystem {
 
                 }
             } else {
-                System.out.println("MySQL connection failed");
+                SurvivalGames.debug("MySQL connection failed");
                 this.mySQL = false;
             }
 
@@ -150,5 +155,25 @@ public class PointSystem {
 
     public static PointSystem getInstance() {
         return pSystem;
+    }
+
+    public Boolean mysqlReady() {
+        return mySQL;
+    }
+
+    public String getPlayerTable() {
+        return playerStatTable;
+    }
+
+    public String getArenaTable() {
+        return arenaStatTable;
+    }
+    
+    public MySQLConnection getArenaConnection(){
+        return this.arenaStatHandler;
+    }
+    
+    public MySQLConnection getPlayerConnection(){
+        return this.playerStatHandler;
     }
 }

@@ -45,6 +45,7 @@ public class Stats implements SubCommand {
         }
 
         msg.sendMessage(PrefixType.INFO, ChatColor.GOLD + "" + ChatColor.BOLD + "" + player + "'s stats", requester);
+        msg.sendMessage(PrefixType.INFO, ChatColor.GREEN + " Rank: " + ChatColor.YELLOW + ps.getRankPrefix(), requester);
         msg.sendMessage(PrefixType.INFO, ChatColor.GREEN + " Points: " + ChatColor.YELLOW + ps.getPoints(), requester);
         msg.sendMessage(PrefixType.INFO, ChatColor.GREEN + " Wins: " + ChatColor.YELLOW + ps.getWins(), requester);
         msg.sendMessage(PrefixType.INFO, ChatColor.GREEN + " Kills: " + ChatColor.YELLOW + ps.getKills(), requester);

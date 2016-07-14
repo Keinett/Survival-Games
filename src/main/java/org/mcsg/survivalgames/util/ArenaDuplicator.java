@@ -9,6 +9,7 @@ import org.bukkit.util.Vector;
 import org.mcsg.survivalgames.Game;
 import org.mcsg.survivalgames.GameManager;
 import org.mcsg.survivalgames.SettingsManager;
+import org.mcsg.survivalgames.SurvivalGames;
 
 public class ArenaDuplicator {
 
@@ -46,7 +47,7 @@ public class ArenaDuplicator {
 		background = new background(Math.abs(v2.getBlockX() - v1.getBlockX()) * Math.abs(v2.getBlockY() - v1.getBlockY()) * Math.abs(v1.getBlockZ() - v2.getBlockZ()));
 		background.start();
 		for (int a = 1; a <= factor; a++) {
-			System.out.println(xspan);
+			SurvivalGames.debug(xspan);
 			int sp1 = divf * a + v1.getBlockX();
 			int sp2 = divf * (a + 1) + v1.getBlockX();
 			int y1 = v1.getBlockY();
@@ -56,8 +57,8 @@ public class ArenaDuplicator {
 
 			Vector s1 = new Vector((sp1 < sp2) ? sp1 : sp2, (y1 < y2) ? y1 : y2, (z1 < z2) ? z1 : z2);
 			Vector s2 = new Vector((sp1 > sp2) ? sp1 : sp2, (y1 > y2) ? y1 : y2, (z1 > z2) ? z1 : z2);
-			System.out.println(s1);
-			System.out.println(s2);
+			SurvivalGames.debug(s1);
+			SurvivalGames.debug(s2);
 			new DupeThread(s1, s2, maxx - v1.getBlockX(), 0, a).start();
 		}
 
@@ -142,7 +143,7 @@ public class ArenaDuplicator {
 		@Override
 		public void run() {
 			while (true) {
-				System.out.println(fin + "/" + x + " " + ((fin - prev) / 2) + " " + ((fin + 0.0) / (x + 0.0)) * 100);
+				SurvivalGames.debug(fin + "/" + x + " " + ((fin - prev) / 2) + " " + ((fin + 0.0) / (x + 0.0)) * 100);
 				prev = fin;
 				try {
 					sleep(2000);

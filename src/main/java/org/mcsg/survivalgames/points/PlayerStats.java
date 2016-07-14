@@ -1,6 +1,7 @@
 package org.mcsg.survivalgames.points;
 
-import java.util.concurrent.TimeUnit;
+import org.mcsg.survivalgames.ranks.Rank;
+import org.mcsg.survivalgames.ranks.RankManager;
 
 public class PlayerStats {
 
@@ -10,6 +11,8 @@ public class PlayerStats {
     private int deaths;
     private int playtime;
     private int points;
+    private Rank rank;
+    
 
     public PlayerStats(String name, int kills, int wins, int deaths, int points, int playtime) {
         this.name = name;
@@ -18,6 +21,11 @@ public class PlayerStats {
         this.deaths = deaths;
         this.points = points;
         this.playtime = playtime;
+        this.rank = RankManager.getInstance().getRank(points);
+    }
+    
+    public void updateRank(){
+        rank = RankManager.getInstance().getRank(points);
     }
 
     public void addKill() {
@@ -42,6 +50,14 @@ public class PlayerStats {
 
     public String getName() {
         return name;
+    }
+    
+    public String getRankName(){
+        return rank.getName();
+    }
+    
+    public String getRankPrefix(){
+        return rank.getPrefix();
     }
 
     public int getWins() {

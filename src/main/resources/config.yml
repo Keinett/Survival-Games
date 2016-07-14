@@ -1,12 +1,21 @@
 ################################################
 #               Survival Games                 #
 #                                              #
-#                Developed by                  #
+#               Originally by                  #
 #              Double0negative                 #
 #                                              #
+#          Updated and Maintained by           #
+#            Keiaxx and Rushnett               #
 #                                              #
-#              http://mc-sg.org                #
-#                 voidmc.com                   #
+################################################ 
+# WARNING: Everything in this file is TAB and  #
+# SPACE sensitive. If you accidentally space   #
+# something incorrectly, or use the TAB button #
+# on your keyboard to edit this file, things   #
+# will break. Please consult this website to   #
+# check your config file before asking us for  #
+# help!                                        #
+#       Yaml Parser: http://k31.us/yaml        #
 ################################################
 
 #Do NOT touch this!
@@ -14,6 +23,12 @@ config-version: 3
 
 #Enable debug messages
 debug: false
+
+#Should the plugin handle the chat (Apply rank prefixes automatically)
+#If you do not want the plugin to handle chat, and use your own
+#chat formatting plugin, use the {SURVIVALGAMES} tag to implement
+#rank prefixes (Ex. EssentialsChat)
+handlechat: false
 
 #Set how many players are needed for the game
 #to auto-start. Once the player limit is reached
@@ -124,8 +139,6 @@ deathmatch:
      # Radius in Blocks
      radius: 30
   
-  
-  
 #Settings for connecting to and 
 #SQL server. These settings will
 #be used for  the online webstats
@@ -142,38 +155,32 @@ sql:
   prefix: 'sg_'
  
  
-# Enable or disable points tracking. If enabled,
-# sql settings above MUST be set up or else plugin
-# will be disabled upon startup
-
-points:
-  enabled: false
-
+# stats: Enable or disable points tracking. If enabled,
+#        sql settings above MUST be set up or else plugin
+#        will be disabled upon startup
+stats:
+  enabled: true
+# player: The number of points a player will recieve upon each kill or death.
+  player:
+    kill: 2
+    death: -1
+# This section allows you to create values for MAX points given for a win. 
+# MAX point are only give when 30 minutes are reached, 
+# and anything less is determined by MAXPOINTS * (gameTime/TotalTime).
+# equation: CEILING(addFactor+(multiFactor*(numberOfPlayers*ratio)))
+  win:
+    multiFactor: 4
+    addFactor: 4
+    ratio: 0.27
+    
 ###########################################################
 ################### Endgame Compass #######################
 ###########################################################  
 compass:
   enabled: true
   radius: 200
-  
-###########################################################
-#######################  Stats ############################
-###########################################################
-  
-  
-#Settings for the webstats. If enabled, stats 
-#such as k/d record, wins, win streaks, kill
-#streaks, etc. will be saved. 
 
 
-stats:
-  points:
-    # The number of points a player earns per kill
-    kill: 2
-    position: 7
-    killstreak:
-      base: 10
-      multiplier: 2
     
     
     

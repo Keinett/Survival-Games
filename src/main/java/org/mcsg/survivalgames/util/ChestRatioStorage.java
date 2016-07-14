@@ -10,6 +10,7 @@ import java.util.Random;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.mcsg.survivalgames.GameManager;
+import org.mcsg.survivalgames.SurvivalGames;
 
 public class ChestRatioStorage {
 
@@ -50,21 +51,21 @@ public class ChestRatioStorage {
 
                     for (ItemStack iStack : content) {
 
-                        System.out.println("SG DEBUG: Added item to ChestRatioStorage Level: " + clevel + " Item: " + iStack.getType().name());
+                        SurvivalGames.debug("SG DEBUG: Added item to ChestRatioStorage Level: " + clevel + " Item: " + iStack.getType().name());
 
                     }
 
                     lvlstore.put(clevel, lvl);
 
                 } else {
-                    System.out.println("LIST IS EMPTY " + clevel);
+                    SurvivalGames.debug("LIST IS EMPTY " + clevel);
                     maxlevel = clevel - 1;
                     break;
                 }
             } catch (NullPointerException ex) {
                 
                 maxlevel = clevel - 1;
-                System.out.println("NULL DUDE " + clevel + "MAX LEVEL IS: "+maxlevel);
+                SurvivalGames.debug("NULL DUDE " + clevel + "MAX LEVEL IS: "+maxlevel);
                 break;
                 
             }

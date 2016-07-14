@@ -1,0 +1,136 @@
+# This file contains all the unlocks associated with points and ranks.
+# Currently, you can only unlock leather colours with each rank (define your own with RGB values).
+# 
+# "Name" is the name that shows up in the shop
+# "Red/Green/Blue" is the rgb value to define the color
+# "ShopUnlockValue" is used with the ranks.yml. A rank will unlock anything that has a less than or equal value there.
+#
+# NOTE: there can only be 18 values here MAX
+#
+Leather:
+  1:
+    Name: Default :(
+    Color:
+      Red: {}
+      Green: {}
+      Blue: {}
+    ShopUnlockValue: 0
+  2:
+    Name: Olive
+    Color:
+      Red: 128
+      Green: 128
+      Blue: 0
+    ShopUnlockValue: 1
+  3:
+    Name: Yellow
+    Color:
+      Red: 255
+      Green: 255
+      Blue: 0
+    ShopUnlockValue: 3
+  4:
+    Name: Orange
+    Color:
+      Red: 255
+      Green: 165
+      Blue: 0
+    ShopUnlockValue: 4
+  5:
+    Name: Red
+    Color:
+      Red: 255
+      Green: 0
+      Blue: 0
+    ShopUnlockValue: 5
+  6:
+    Name: Blue
+    Color:
+      Red: 0
+      Green: 0
+      Blue: 255
+    ShopUnlockValue: 6
+  7:
+    Name: Green
+    Color:
+      Red: 0
+      Green: 255
+      Blue: 0
+    ShopUnlockValue: 7
+  8:
+    Name: Maroon
+    Color:
+      Red: 128
+      Green: 0
+      Blue: 0
+    ShopUnlockValue: 8
+  9:
+    Name: Navy
+    Color:
+      Red: 0
+      Green: 0
+      Blue: 128
+    ShopUnlockValue: 9
+  10:
+    Name: Dark Green
+    Color:
+      Red: 0
+      Green: 192
+      Blue: 0
+    ShopUnlockValue: 10
+  11:
+    Name: Black
+    Color:
+      Red: 0
+      Green: 0
+      Blue: 0
+    ShopUnlockValue: 11
+  12:
+    Name: Silver
+    Color:
+      Red: 192
+      Green: 192
+      Blue: 192
+    ShopUnlockValue: 12
+  13:
+    Name: White
+    Color:
+      Red: 255
+      Green: 255
+      Blue: 255
+    ShopUnlockValue: 13
+  14:
+    Name: Purple
+    Color:
+      Red: 128
+      Green: 0
+      Blue: 128
+    ShopUnlockValue: 14
+  15:
+    Name: Magenta
+    Color:
+      Red: 255
+      Green: 0
+      Blue: 255
+    ShopUnlockValue: 15
+  16:
+    Name: Sky Blue
+    Color:
+      Red: 0
+      Green: 191
+      Blue: 255
+    ShopUnlockValue: 16
+  17:
+    Name: Dark Legend
+    Color:
+      Red: 72
+      Green: 61
+      Blue: 139
+    ShopUnlockValue: 17
+  18:
+    Name: Mythic
+    Color:
+      Red: 132
+      Green: 112
+      Blue: 255
+    ShopUnlockValue: 18

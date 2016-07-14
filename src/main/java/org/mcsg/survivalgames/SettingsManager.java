@@ -13,6 +13,8 @@ import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
+import org.mcsg.survivalgames.points.PointSystem;
+import org.mcsg.survivalgames.ranks.RankManager;
 
 public class SettingsManager {
 
@@ -25,12 +27,16 @@ public class SettingsManager {
 	private FileConfiguration kits;
 	private FileConfiguration messages;
 	private FileConfiguration chest;
-
+        private FileConfiguration ranks;
+        private FileConfiguration shops;
+        
 	private File f; // spawns
 	private File f2; // system
 	private File f3; // kits
 	private File f4; // messages
 	private File f5; // chest
+        private File f6; // ranks
+        private File f7; // shops
 
 	private static final int KIT_VERSION = 1;
 	private static final int MESSAGE_VERSION = 1;
@@ -63,8 +69,11 @@ public class SettingsManager {
 		f3 = new File(p.getDataFolder(), "kits.yml");
 		f4 = new File(p.getDataFolder(), "messages.yml");
 		f5 = new File(p.getDataFolder(), "chest.yml");
+                f6 = new File(p.getDataFolder(), "ranks.yml");
+		f7 = new File(p.getDataFolder(), "shops.yml");
 
 		try {
+                    
 			if (!f.exists())
 				f.createNewFile();
 			if (!f2.exists())
@@ -75,6 +84,10 @@ public class SettingsManager {
 				loadFile("messages.yml");
 			if (!f5.exists())
 				loadFile("chest.yml");
+                        if (!f6.exists())
+				loadFile("ranks.yml");
+                        if (!f7.exists())
+				loadFile("shops.yml");
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -93,6 +106,11 @@ public class SettingsManager {
 
 		reloadMessages();
 		saveMessages();
+                
+                
+                reloadShops();
+                
+                
 
 	}
 
@@ -123,6 +141,14 @@ public class SettingsManager {
 	public FileConfiguration getMessageConfig() {
 		return messages;
 	}
+        
+        public FileConfiguration getRanks(){
+                return ranks;
+        }
+        
+        public FileConfiguration getShops(){
+                return shops;
+        }
 
 	public void saveConfig() {
 		// p.saveConfig();
@@ -206,7 +232,16 @@ public class SettingsManager {
 			reloadKits();
 		}
 	}
+        
+        public void reloadRanks() {
+		ranks = YamlConfiguration.loadConfiguration(f6);
+                RankManager.getInstance().initializeRanks(ranks);
+	}
 
+	public void reloadShops() {
+		chest = YamlConfiguration.loadConfiguration(f7);
+	}
+        
 	public void saveSystemConfig() {
 		try {
 			system.save(f2);
@@ -246,6 +281,24 @@ public class SettingsManager {
 	public void saveChest() {
 		try {
 			chest.save(f5);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+        
+        public void saveRanks() {
+		try {
+			ranks.save(f6);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void saveShops() {
+		try {
+			shops.save(f7);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -336,19 +389,19 @@ public class SettingsManager {
 
 	public void loadFile(String file) {
 		File t = new File(p.getDataFolder(), file);
-		System.out.println("Writing new file: " + t.getAbsolutePath());
+		SurvivalGames.debug("Writing new file: " + t.getAbsolutePath());
 
 		try {
 			t.createNewFile();
 			FileWriter out = new FileWriter(t);
-			System.out.println(file);
+			SurvivalGames.debug(file);
 			InputStream is = getClass().getResourceAsStream("/" + file);
 			InputStreamReader isr = new InputStreamReader(is);
 			BufferedReader br = new BufferedReader(isr);
 			String line;
 			while ((line = br.readLine()) != null) {
 				out.write(line + "\n");
-				System.out.println(line);
+				SurvivalGames.debug(line);
 			}
 			out.flush();
 			is.close();

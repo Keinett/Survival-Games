@@ -34,6 +34,7 @@ import org.mcsg.survivalgames.util.ChestRatioStorage;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import org.mcsg.survivalgames.events.CompassEvents;
+import org.mcsg.survivalgames.events.PlayerEvents;
 import org.mcsg.survivalgames.points.PointSystem;
 
 public class SurvivalGames extends JavaPlugin {
@@ -126,12 +127,13 @@ public class SurvivalGames extends JavaPlugin {
             MessageManager.getInstance().setup();
             GameManager.getInstance().setup(p);
             PointSystem.getInstance().setup(p);
+            
 
             try { // try loading everything that uses SQL.
                 FileConfiguration c = SettingsManager.getInstance().getConfig();
                 QueueManager.getInstance().setup();
+                SettingsManager.getInstance().reloadRanks();
                 PointSystem.getQueryHandler().initStatCache();
-
                 dbcon = true;
             } catch (Exception e) {
                 dbcon = false;
@@ -160,6 +162,7 @@ public class SurvivalGames extends JavaPlugin {
             pm.registerEvents(new KitEvents(), p);
             pm.registerEvents(new KeepLobbyLoadedEvent(), p);
             pm.registerEvents(new CompassEvents(), p);
+            pm.registerEvents(new PlayerEvents(), p);
 
             for (Player p : Bukkit.getOnlinePlayers()) {
                 if (GameManager.getInstance().getBlockGameId(p.getLocation()) != -1) {
@@ -209,7 +212,10 @@ public class SurvivalGames extends JavaPlugin {
 
     public static void debug(Object obj) {
         if (SettingsManager.getInstance().getConfig().getBoolean("debug", false)) {
-            logger.info("[Debug] " + obj);
+            logger.info("[XBOX DEBUG] " + obj);
+            if(SettingsManager.getInstance().getConfig().getBoolean("debugBroadcast", false)){
+                Bukkit.getServer().broadcastMessage("[XBOX DEBUG] "+obj);
+            }
         }
     }
 

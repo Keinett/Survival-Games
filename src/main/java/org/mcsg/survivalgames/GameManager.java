@@ -14,7 +14,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.mcsg.survivalgames.Game.GameMode;
 import org.mcsg.survivalgames.MessageManager.PrefixType;
-import org.mcsg.survivalgames.stats.StatsManager;
 import org.mcsg.survivalgames.util.Kit;
 
 import com.sk89q.worldedit.bukkit.WorldEditPlugin;
@@ -79,7 +78,6 @@ public class GameManager {
 					SurvivalGames.$("Loading Arena: " + a);
 					loaded++;
 					games.add(new Game(a));
-					StatsManager.getInstance().addArena(a);
 				}
 			}
 			a++;
@@ -308,9 +306,6 @@ public class GameManager {
 	private void hotAddArena(int no) {
 		Game game = new Game(no);
 		games.add(game);
-		StatsManager.getInstance().addArena(no);
-		// SurvivalGames.$("game added "+ games.size()+"
-		// "+SettingsManager.getInstance().getSystemConfig().getInt("gs-system.arenano"));
 	}
 
 	public void hotRemoveArena(int no) {

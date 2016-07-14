@@ -4,11 +4,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import org.bukkit.configuration.file.FileConfiguration;
 
 import org.mcsg.survivalgames.SettingsManager;
+import org.mcsg.survivalgames.SurvivalGames;
 
 /**
  *
@@ -26,29 +25,29 @@ public final class PointQueries {
     }
 
     public static PlayerStats getStats(String player) {
-        
-        if(cachedStats.containsKey(player)){
-           return cachedStats.get(player.toLowerCase()); 
-        }else{
-           return null;
+
+        if (cachedStats.containsKey(player)) {
+            return cachedStats.get(player.toLowerCase());
+        } else {
+            return null;
         }
-        
+
     }
 
-    public void mysqlQuery(final String query) {
-        if (PointSystem.getInstance().mySQL) {
+    public void playerQuery(final String query) {
+        if (PointSystem.getInstance().mysqlReady()) {
             try {
-                PointSystem.getInstance().playerStatHandler.executeQuery(query, true);
+                PointSystem.getInstance().getPlayerConnection().executeQuery(query, true);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public void mysqlQuery2(final String query) {
-        if (PointSystem.getInstance().mySQL) {
+    public void arenaQuery(final String query) {
+        if (PointSystem.getInstance().mysqlReady()) {
             try {
-                PointSystem.getInstance().arenaStatHandler.executeQuery(query, true);
+                PointSystem.getInstance().getArenaConnection().executeQuery(query, true);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -57,9 +56,9 @@ public final class PointQueries {
 
     public boolean mysqlExists(final String query) {
         ResultSet result = null;
-        if (PointSystem.getInstance().mySQL) {
+        if (PointSystem.getInstance().mysqlReady()) {
             try {
-                result = PointSystem.getInstance().playerStatHandler.executeQuery(query, false);
+                result = PointSystem.getInstance().getPlayerConnection().executeQuery(query, false);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -76,9 +75,13 @@ public final class PointQueries {
 
     public Integer calculatePoints(Integer totaltime, Integer endtime, Integer numPlayers) {
 
+        int addFactor = SettingsManager.getInstance().getConfig().getInt("stats.win.addFactor");
+        int multiFactor =  SettingsManager.getInstance().getConfig().getInt("stats.win.multiFactor");
+        double ratio = SettingsManager.getInstance().getConfig().getDouble("stats.win.ratio");
+        
         Double calcScale = endtime.doubleValue() / totaltime.doubleValue();
 
-        Double calcMaxScore = 4 + (4 * (numPlayers * .27)); // max number of points player can win
+        Double calcMaxScore = addFactor + (multiFactor * (numPlayers * ratio)); // max number of points player can win
 
         return (int) Math.ceil(calcMaxScore * calcScale); //Points player wins
     }
@@ -95,45 +98,56 @@ public final class PointQueries {
 
         Integer time = (int) seconds;
 
-        mysqlQuery2("INSERT INTO `" + PointSystem.getInstance().arenaStatTable + "` (`arena`,`players`,`winner`,`points`,`gameLength`,`gameDate`) VALUES ('" + arena + "', '" + playerList + "', '" + winner + "', '" + points + "', '" + time + "', NOW())");
+        arenaQuery("INSERT INTO `" + PointSystem.getInstance().getArenaTable() + "` (`arena`,`players`,`winner`,`points`,`gameLength`,`gameDate`) VALUES ('" + arena + "', '" + playerList + "', '" + winner + "', '" + points + "', '" + time + "', NOW())");
 
-    }
-
-    public void addKill(final String player, final Integer playtime, final Integer points) {
-
-        FileConfiguration c = SettingsManager.getInstance().getConfig();
-        mysqlQuery("UPDATE `" + PointSystem.getInstance().playerStatTable + "` SET `kills` = `kills`+1 WHERE `name` = '" + player + "'");
-
-        addPoints(player.toLowerCase(), points);
-
-        cachedStats.get(player.toLowerCase()).addKill();
     }
 
     public void addWin(final String player, Integer endtime, Integer totaltime, Integer startplayers, Integer gameLength) {
 
         int calcPoints = calculatePoints(totaltime, endtime, startplayers);
 
-        mysqlQuery("UPDATE `" + PointSystem.getInstance().playerStatTable + "`SET `playtime` = `playtime`+" + gameLength + ", `win` = `win`+1 WHERE `name` = '" + player + "'");
+        playerQuery("UPDATE `" + PointSystem.getInstance().getPlayerTable() + "`SET `playtime` = `playtime`+" + gameLength + ", `win` = `win`+1 WHERE `name` = '" + player + "'");
 
         addPoints(player.toLowerCase(), calcPoints);
 
-        cachedStats.get(player.toLowerCase()).addWin();
+        PlayerStats ps = cachedStats.get(player.toLowerCase());
+        ps.addWin();
+        ps.addPlaytime(gameLength);
+
+    }
+
+    public void addKill(final String player, final Integer playtime) {
+
+        int points = SettingsManager.getInstance().getConfig().getInt("stats.player.kill");
+
+        playerQuery("UPDATE `" + PointSystem.getInstance().getPlayerTable() + "` SET `kills` = `kills`+1 WHERE `name` = '" + player + "'");
+
+        addPoints(player.toLowerCase(), points);
+
+        PlayerStats ps = cachedStats.get(player.toLowerCase());
+        ps.addKill();
+
     }
 
     public void addDeath(final String player, final Integer playtime) {
 
-        mysqlQuery("UPDATE `" + PointSystem.getInstance().playerStatTable + "` SET `playtime` = `playtime`+" + playtime + ", `deaths` = `deaths`+1 WHERE `name` = '" + player + "'");
+        int points = SettingsManager.getInstance().getConfig().getInt("stats.player.death");
 
-        cachedStats.get(player.toLowerCase()).addDeath();
+        playerQuery("UPDATE `" + PointSystem.getInstance().getPlayerTable() + "` SET `playtime` = `playtime`+" + playtime + ", `deaths` = `deaths`+1 WHERE `name` = '" + player + "'");
+
+        PlayerStats ps = cachedStats.get(player.toLowerCase());
+        ps.addDeath();
+        ps.addPlaytime(playtime);
     }
 
     public void addPoints(String player, Integer points) {
 
         points = (int) Math.round(points);
 
-        mysqlQuery("UPDATE `" + PointSystem.getInstance().playerStatTable + "` SET `points` = `points`+" + points + " WHERE `name` = '" + player + "'");
+        playerQuery("UPDATE `" + PointSystem.getInstance().getPlayerTable() + "` SET `points` = `points`+" + points + " WHERE `name` = '" + player + "'");
 
-        cachedStats.get(player.toLowerCase()).addPoints(points);
+        PlayerStats ps = cachedStats.get(player.toLowerCase());
+        ps.addPoints(points);
 
     }
 
@@ -145,7 +159,7 @@ public final class PointQueries {
     public void initPlayer(final String player) {
 
         if (!cachedStats.containsKey(player.toLowerCase())) {
-            mysqlQuery("INSERT INTO `" + PointSystem.getInstance().playerStatTable + "` (`name`, `kills`, `deaths`, `points`, `win`, `playtime`) VALUES ('"
+            playerQuery("INSERT INTO `" + PointSystem.getInstance().getPlayerTable() + "` (`name`, `kills`, `deaths`, `points`, `win`, `playtime`) VALUES ('"
                     + player + "', 0, 0, 0, 0, 0)");
 
             String lowerName = player.toLowerCase();
@@ -153,6 +167,13 @@ public final class PointQueries {
             PlayerStats ps = new PlayerStats(lowerName, 0, 0, 0, 0, 0);
 
             cachedStats.put(lowerName, ps);
+
+        }
+    }
+
+    public void updateAllRanks() {
+        for (PlayerStats ps : cachedStats.values()) {
+            ps.updateRank();
         }
     }
 
@@ -160,14 +181,14 @@ public final class PointQueries {
         long start_time = System.nanoTime();
         double difference = 0;
 
-        if (!PointSystem.getInstance().mySQL) {
-            System.out.println("[SurvivalGames] MySQL is not set!");
+        if (!PointSystem.getInstance().mysqlReady()) {
+            SurvivalGames.debug("MySQL is not set!");
             cachedStats = null;
         } else {
             ResultSet result = null;
             try {
-                result = PointSystem.getInstance().playerStatHandler
-                        .executeQuery("SELECT * FROM `" + PointSystem.getInstance().playerStatTable + "` WHERE 1", false);
+                result = PointSystem.getInstance().getPlayerConnection()
+                        .executeQuery("SELECT * FROM `" + PointSystem.getInstance().getPlayerTable() + "` WHERE 1", false);
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -190,9 +211,12 @@ public final class PointQueries {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+
+            updateAllRanks();
+
             long end_time = System.nanoTime();
             difference = (end_time - start_time) / 1e6;
-            System.out.println("[SurvivalGames] Stats initialization/update took " + difference + "ms to update.");
+            SurvivalGames.debug("Stats initialization/update took " + difference + "ms to update.");
         }
 
     }

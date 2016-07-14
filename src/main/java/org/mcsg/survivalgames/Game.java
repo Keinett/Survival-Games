@@ -31,7 +31,6 @@ import org.mcsg.survivalgames.api.PlayerLeaveArenaEvent;
 import org.mcsg.survivalgames.hooks.HookManager;
 import org.mcsg.survivalgames.logging.QueueManager;
 import org.mcsg.survivalgames.points.PointSystem;
-import org.mcsg.survivalgames.stats.StatsManager;
 import org.mcsg.survivalgames.util.ItemReader;
 import org.mcsg.survivalgames.util.Kit;
 
@@ -69,7 +68,6 @@ public class Game {
     private String rbstatus = "";
     private long startTime = 0;
     private boolean countdownRunning;
-    private StatsManager sm = StatsManager.getInstance();
     private HashMap<String, String> hookvars = new HashMap<String, String>();
     private MessageManager msgmgr = MessageManager.getInstance();
 
@@ -365,7 +363,6 @@ public class Game {
                         clearInv(p);
 
                         activePlayers.add(p);
-                        sm.addPlayer(p, gameID);
 
                         hookvars.put("activeplayers", activePlayers.size() + "");
                         LobbyManager.getInstance().updateWall(gameID);
@@ -436,7 +433,7 @@ public class Game {
 
         ArrayList<Kit> kits = GameManager.getInstance().getKits(p);
         SurvivalGames.debug(kits + "");
-        if (kits == null || kits.size() == 0 || !SettingsManager.getInstance().getKits().getBoolean("enabled")) {
+        if (kits == null || kits.isEmpty() || !SettingsManager.getInstance().getKits().getBoolean("enabled")) {
             GameManager.getInstance().leaveKitMenu(p);
             return;
         }
@@ -533,7 +530,7 @@ public class Game {
             return;
         }
 
-        if (activePlayers.size() <= 0) {
+        if (activePlayers.size() <= 1) {
             for (Player pl : activePlayers) {
                 msgmgr.sendMessage(PrefixType.WARNING, "Not enough players!", pl);
                 mode = GameMode.WAITING;
@@ -676,7 +673,6 @@ public class Game {
             killPlayer(p, b);
 
         } else {
-            sm.removePlayer(p, gameID);
             // if (!b)
             // p.teleport(SettingsManager.getInstance().getLobbySpawn());
             restoreInv(p);
@@ -718,7 +714,7 @@ public class Game {
             if (!left) {
                 p.teleport(SettingsManager.getInstance().getLobbySpawn());
             }
-            sm.playerDied(p, activePlayers.size(), gameID, new Date().getTime() - startTime);
+            
 
             if (!activePlayers.contains(p)) {
                 return;
@@ -747,9 +743,7 @@ public class Game {
 
                                 if (killer != null) {
                                     PointSystem.getQueryHandler().addDeath(p.getName(), gameElapsedSeconds);
-                                    PointSystem.getQueryHandler().addKill(killer.getName(), gameElapsedSeconds, 2);
-
-                                    sm.addKill(killer, p, gameID);
+                                    PointSystem.getQueryHandler().addKill(killer.getName(), gameElapsedSeconds);
                                 }
 
                             } else {
