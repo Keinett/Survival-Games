@@ -1,12 +1,19 @@
-#Configuration for the chest item ratios
-#this system works by levels. Level 1 aka lvl1 
-#is the most common stuff whereas lvl5 is the least 
-#common. You can set what will spawn at each level below.
-#The ratio setting determines how likley the next level is
-#to spawn in. a ratio of 2 means that it is twice as unlikley
-#for the next level to spawn in.
-##FORMAT
-# <itemid>,<max amount per slot>
+# Configuration for the chest item ratios
+# This system works by levels. Level 1 aka lvl1 
+# is the most common items whereas lvl5 is the least 
+# common items. You can set what will spawn at each level below.
+# The ratio setting determines how likley the next level is
+# to spawn in. a ratio of 2 means that it is twice as unlikley
+# for the next level to spawn in.
+#
+#
+# The item format for this configuration allows for all types of
+# meta data. There are various examples in this config on how
+# to use the format, but if you want to create specific items
+# in game, the command /sg inventory (OPs only), will copy
+# the format of all items in your inventory to <yourname>.yml
+# in the SurvivalGames plugin folder
+#
 
 #DONT TOUCH THIS
 version: 0
@@ -15,18 +22,111 @@ chest:
   ratio: 10
   lvl1:
   - ==: org.bukkit.inventory.ItemStack
-    type: STICK
+    type: WOOD_SWORD
+  - ==: org.bukkit.inventory.ItemStack
+    type: LEATHER_HELMET
+  - ==: org.bukkit.inventory.ItemStack
+    type: LEATHER_CHESTPLATE
+  - ==: org.bukkit.inventory.ItemStack
+    type: LEATHER_LEGGINGS
+  - ==: org.bukkit.inventory.ItemStack
+    type: LEATHER_BOOTS
+  - ==: org.bukkit.inventory.ItemStack
+    type: PORK
+    amount: 3
+  - ==: org.bukkit.inventory.ItemStack
+    type: RAW_FISH
+    amount: 3
+  - ==: org.bukkit.inventory.ItemStack
+    type: MELON
+    amount: 3
+  lvl2:
+  - ==: org.bukkit.inventory.ItemStack
+    type: WOOD_SWORD
+  - ==: org.bukkit.inventory.ItemStack
+    type: GOLD_HELMET
+  - ==: org.bukkit.inventory.ItemStack
+    type: GOLD_CHESTPLATE
+  - ==: org.bukkit.inventory.ItemStack
+    type: GOLD_LEGGINGS
+  - ==: org.bukkit.inventory.ItemStack
+    type: GOLD_BOOTS
+  - ==: org.bukkit.inventory.ItemStack
+    type: GRILLED_PORK
+    amount: 3
+  - ==: org.bukkit.inventory.ItemStack
+    type: BOWL
+    amount: 4
+  - ==: org.bukkit.inventory.ItemStack
+    type: APPLE
+    amount: 2
+  - ==: org.bukkit.inventory.ItemStack
+    type: RAW_BEEF
+    amount: 4
+  - ==: org.bukkit.inventory.ItemStack
+    type: COOKED_BEEF
+    amount: 2
+  - ==: org.bukkit.inventory.ItemStack
+    type: RAW_CHICKEN
+    amount: 4
+  - ==: org.bukkit.inventory.ItemStack
+    type: COOKED_CHICKEN
+    amount: 2
+  - ==: org.bukkit.inventory.ItemStack
+    type: ENDER_PEARL
+    amount: 2
+  - ==: org.bukkit.inventory.ItemStack
+    type: MUSHROOM_SOUP
+  lvl3:
+  - ==: org.bukkit.inventory.ItemStack
+    type: GOLD_SWORD
+  - ==: org.bukkit.inventory.ItemStack
+    type: IRON_HELMET
+  - ==: org.bukkit.inventory.ItemStack
+    type: IRON_CHESTPLATE
+  - ==: org.bukkit.inventory.ItemStack
+    type: IRON_LEGGINGS
+  - ==: org.bukkit.inventory.ItemStack
+    type: IRON_BOOTS
+  - ==: org.bukkit.inventory.ItemStack
+    type: CHAINMAIL_HELMET
+  - ==: org.bukkit.inventory.ItemStack
+    type: CHAINMAIL_CHESTPLATE
+  - ==: org.bukkit.inventory.ItemStack
+    type: CHAINMAIL_BOOTS
+  - ==: org.bukkit.inventory.ItemStack
+    type: COMPASS
+  lvl4:
+  - ==: org.bukkit.inventory.ItemStack
+    type: IRON_SWORD
+  - ==: org.bukkit.inventory.ItemStack
+    type: INK_SACK
+    damage: 4
+    amount: 2
+  - ==: org.bukkit.inventory.ItemStack
+    type: EXP_BOTTLE
+    amount: 2
+  lvl5:
+  - ==: org.bukkit.inventory.ItemStack
+    type: DIAMOND_HELMET
+  - ==: org.bukkit.inventory.ItemStack
+    type: SHIELD
+  - ==: org.bukkit.inventory.ItemStack
+    type: STONE_SWORD
     meta:
       ==: ItemMeta
       meta-type: UNSPECIFIC
-      display-name: Irritating Stick
+      display-name: The Rushnett
       enchants:
-        DAMAGE_ALL: 5
-        KNOCKBACK: 3
+        DAMAGE_ALL: 2
   - ==: org.bukkit.inventory.ItemStack
-    type: CHEST
-
-  
-  
-  
-  
+    type: IRON_AXE
+    meta:
+      ==: ItemMeta
+      meta-type: UNSPECIFIC
+      display-name: The Keiaxx
+      lore:
+      - ''
+      - ...pun not intended
+      enchants:
+        DAMAGE_ALL: 3

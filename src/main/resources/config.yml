@@ -24,7 +24,7 @@ config-version: 3
 #Enable debug messages
 debug: false
 
-#Should the plugin handle the chat (Apply rank prefixes automatically)
+#Should the plugin handle the chat? (Apply rank prefixes automatically)
 #If you do not want the plugin to handle chat, and use your own
 #chat formatting plugin, use the {SURVIVALGAMES} tag to implement
 #rank prefixes (Ex. EssentialsChat)
@@ -136,7 +136,7 @@ deathmatch:
   playerGlow: true
   border:
      enabled: true
-     # Radius in Blocks
+     # Radius in blocks from first spawn
      radius: 30
   
 #Settings for connecting to and 

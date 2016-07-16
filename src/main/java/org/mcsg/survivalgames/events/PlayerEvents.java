@@ -1,10 +1,6 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.mcsg.survivalgames.events;
 
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -44,7 +40,7 @@ public class PlayerEvents implements Listener {
             
         } else {
 
-            e.setFormat(prefix + "" + p.getName() + ": " + e.getMessage());
+            e.setFormat(prefix + "" + p.getDisplayName() + ChatColor.RESET + ": " + e.getMessage());
 
         }
     }
