@@ -23,7 +23,7 @@ Changes and Updates
   - Reworked Deathmatch (see config)
   - Fixed bandages
   - Added ranking system based on points (ranks.yml)
-  - Addes shops.yml (not implemented yet)
+  - Added shops.yml (not implemented yet)
   - Added win equation that gives points based on time and player count
   - Added option to give negative points for deaths
   - Added chat handler
